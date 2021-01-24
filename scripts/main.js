@@ -70,11 +70,11 @@ class ColorbarSVG {
     }
 
     generateSVGElement() {
-        const svgContainer = document.createElement("g");
+        const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-        const structureContainer = document.createElement("g");
+        const structureContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
-        const line = document.createElement("line");
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
 
         const lineStart = this.lineStart;
         const lineEnd = this.lineEnd;
@@ -87,7 +87,7 @@ class ColorbarSVG {
         line.setAttribute("stroke-width", COLORBAR_WIDTH);
         structureContainer.append(line);
 
-        const extender = document.createElement("line");
+        const extender = document.createElementNS("http://www.w3.org/2000/svg", "line");
         
         const extenderEnd = this.extenderEnd;
         extender.setAttribute("x1", lineEnd.x);
@@ -100,7 +100,7 @@ class ColorbarSVG {
         extender.setAttribute("stroke-width", COLORBAR_WIDTH / 3);
         structureContainer.append(extender);
 
-        const rotationButton = document.createElement("circle");
+        const rotationButton = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 
         const buttonLocation = this.rotationLocation;
         rotationButton.setAttribute("cx", buttonLocation.x);
@@ -113,7 +113,7 @@ class ColorbarSVG {
         structureContainer.append(rotationButton);
         svgContainer.append(structureContainer);
 
-        const colorContainer = document.createElement("g");
+        const colorContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
         this.colorContainer = colorContainer;
         const colors = this.cbo.colors;
         for (const position in colors) {
@@ -134,7 +134,7 @@ class ColorbarSVG {
         (lineEnd.y - lineStart.y) * parseFloat(position)/100;
 
 
-        const colorElement = document.createElement("circle");
+        const colorElement = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         colorElement.setAttribute("cx", colorPositionX);
         colorElement.setAttribute("cy", colorPositionY);
         colorElement.setAttribute("r", COLORBAR_RADIUS);
@@ -166,10 +166,14 @@ colorInput.addEventListener("change", function() {
 });
 
 
-const cb = new Colorbar();
+const cb = new Colorbar({0: "#ff95f3", 100: "#008080"});
 const cbSVG = new ColorbarSVG(cb);
 const svgElem = cbSVG.generateSVGElement();
 
-colorBarContainer.innerHTML = svgElem.innerHTML;
+colorBarContainer.append(svgElem);
+
+/*colorBarContainer.innerHTML = svgElem.innerHTML;*/
+/*colorBarContainer.innerHTML = "";*/
 /*colorBarContainer.innerHTML = "";
-colorBarContainer.append(svgElem);*/
+colorBarContainer.append(svgElem.children[0]);
+colorBarContainer.append(svgElem.children[1]);*/
