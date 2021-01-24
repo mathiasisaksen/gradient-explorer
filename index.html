@@ -10,14 +10,19 @@
 
     <main>
         <div id="preview-window">
-            <svg>
-                <line x1="50" y1="50" x2="200" y2="200" stroke-linecap="round" style="stroke:rgb(0,0,0, 1);stroke-width:5"/>
-                <line x1="200" y1="200" x2="250" y2="250" stroke-dasharray="2, 2" style="stroke:rgb(0,0,0);stroke-width:1"/>
-                <circle cx="250" cy="250" r="6" stroke="black" stroke-width="1" fill="transparent" />
-                <circle cx="50" cy="50" r="6" stroke="black" stroke-width="1" fill="red" />
-                <circle cx="200" cy="200" r="6" stroke="black" stroke-width="1" fill="blue" />
+            <svg id="colorbar-container">
+                <g>
+                    <line x1="150" y1="150" x2="300" y2="300" stroke-linecap="round" style="stroke:rgb(0,0,0, 1);stroke-width:5"/>
+                    <line x1="300" y1="300" x2="350" y2="350" stroke-dasharray="2, 2" style="stroke:rgb(0,0,0);stroke-width:1"/>
+                    <circle cx="350" cy="350" r="6" stroke="black" stroke-width="1" fill="transparent" />
+                </g>
                 
+                <circle cx="150" cy="150" r="6" stroke="black" stroke-width="1" fill="#ff95f3" />
+                <circle cx="300" cy="300" r="6" stroke="black" stroke-width="1" fill="#008080" />
               </svg>
+              <div id="hide-container">
+                  <button id="hide-colorbar">Hide </button>
+              </div>
         </div>
         <div id="layer-panel">
             <div id="panel-title">Layers</div>

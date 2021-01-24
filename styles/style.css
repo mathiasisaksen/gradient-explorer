@@ -22,10 +22,33 @@ main {
 }
 
 #preview-window {
+    position: relative;
     border-right: 2px solid black;
     height: 100%;
     width: 100%;
-    background: linear-gradient(135deg, red, blue);
+    background: linear-gradient(135deg, #ff95f3, #008080);
+}
+
+#hide-container {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+}
+
+#hide-colorbar {
+    width: 80px;
+    height: 40px;
+    opacity: 0.2;
+    border-radius: 15px;
+    outline: none;
+    background-color: var(--panel-background);
+    font-size: 1em;
+    transition: opacity 0.3s;
+    font-weight: 600;
+}
+
+#hide-colorbar:hover {
+    opacity: 1;
 }
 
 #layer-panel {
@@ -70,7 +93,7 @@ main {
     border-radius: 0 0 15px 15px;
     color: var(--panel-text-color);
     font-weight: 600;
-    padding: 5px 0 5px 0;
+    padding: 10px 0 10px 0;
 }
 
 #color-controls-container {
@@ -78,9 +101,12 @@ main {
     flex-direction: row;
     justify-content: space-evenly;
     align-items: center;
+    margin-top: 10px;
 }
 
 #color-button {
+    position: relative;
+    left: -7px;
     background-color: violet;
     height: 30px;
     width: 30px;
@@ -137,6 +163,10 @@ svg {
 
 svg line {
     cursor: crosshair;
+}
+
+svg .colorbar.hidden {
+    display: none;
 }
 
 svg circle {
