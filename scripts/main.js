@@ -4,9 +4,10 @@ const COLORBAR_WIDTH = 5;
 const COLORBAR_EXTENSION = 70;
 const COLORBAR_RADIUS = 10;
 const COLORBAR_FILL = "#222222"
-const COLORBAR_CIRCLE_STROKE = 1;
+const COLORBAR_CIRCLE_STROKE = 3;
 const COLORBAR_INITIAL_DIRECTION = 45;
 const COLORBAR_PADDING = 2;
+const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
 
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
@@ -25,11 +26,9 @@ function interpolatePosition(startPoint, endPoint, weight) {
 }
 
 class Colorbar {
-    constructor({initialColors = [{color: "red", position: 0}, 
-                                  {color: "blue", position: 100}]}) {
+    constructor(layerId, initialColors = DEFAULT_COLORS) {
         this.colors = initialColors;
-        numberOfLayers++;
-        this.layerId = numberOfLayers;
+        this.layerId = layerId;
         this.svgObject = new ColorbarSVG(this);
     }
     addColor(color, position) {
@@ -59,6 +58,25 @@ class ColorbarSVG {
             COLORBAR_LENGTH / 2 * Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
         this.setupSVGStructure();
         /*this.storeElementReferences();*/
+        this.updatePositions();
+        this.addInitialListeners();
+    }
+
+    get direction() {
+        const direction = 180 / Math.PI * 
+            Math.atan2(this.lineEndY - this.lineStartY, this.lineEndX - this.lineStartX);
+        return(direction);
+    }
+
+    updateLineStart(x, y) {
+        this.lineStartX = x;
+        this.lineStartY = y;
+        this.updatePositions();
+    }
+
+    updateLineEnd(x, y) {
+        this.lineEndX = x;
+        this.lineEndY = y;
         this.updatePositions();
     }
 
@@ -123,6 +141,7 @@ class ColorbarSVG {
             elements.colors.push(colorElement);
             colorContainer.append(colorElement);
         }
+
         svgContainer.append(colorContainer);
         this.svgContainer = svgContainer;
         colorBarContainer.append(svgContainer);
@@ -136,15 +155,15 @@ class ColorbarSVG {
             lineEndX: this.lineEndX,
             lineEndY: this.lineEndY
         };
-        const direction = Math.atan2(p.lineEndY - p.lineStartY, p.lineEndX - p.lineStartX);
+        const direction = this.direction;
         p.extenderEndX = p.lineEndX + (COLORBAR_EXTENSION) *
-                            Math.cos(direction);
+                            Math.cos(direction * Math.PI / 180);
         p.extenderEndY = p.lineEndY + (COLORBAR_EXTENSION) * 
-                            Math.sin(direction);
+                            Math.sin(direction * Math.PI / 180);
         p.rotationX = p.extenderEndX + (COLORBAR_RADIUS + COLORBAR_PADDING) *
-                            Math.cos(direction);
+                            Math.cos(direction * Math.PI / 180);
         p.rotationY = p.extenderEndY + (COLORBAR_RADIUS + COLORBAR_PADDING) * 
-                            Math.sin(direction);
+                            Math.sin(direction * Math.PI / 180);
                             
         const colors = this.cbo.colors;
         p.colors = [];
@@ -196,14 +215,34 @@ class ColorbarSVG {
         const colorContainer = document.querySelector(`.svg-color-container[layer-id="${this.cbo.layerId}"]`)
         colorContainer.append(colorElement);
         this.elements.colors.push(colorElement);
+        this.updatePositions();
+    }
+
+    addInitialListeners() {
+        const numColors = this.elements.colors.length;
+        this.elements.colors[0].addEventListener("mousedown", handleStartColorMouseDown);
+        this.elements.colors[numColors - 1].addEventListener("mousedown", handleEndColorMouseDown);
+        console.log(this.elements.colors[numColors-1]);
     }
 }
 
 class Gradient {
-    constructor() {
-        numberOfLayers++;
+    constructor(colors = DEFAULT_COLORS) {
         this.layerId = numberOfLayers;
-        this.colorbar = new Colorbar();
+        this.colors = colors;
+        numberOfLayers++;
+        this.colorbar = new Colorbar(this.layerId, this.colors);
+    }
+    updateGradient() {
+        const direction = this.colorbar.svgObject.direction + 90;
+        const colorString = this.colors.map(obj => `${obj.color} ${obj.position}%`).join(", ");
+        const gradientString = `linear-gradient(${direction}deg, ${colorString})`;
+        previewWindow.style.backgroundImage = gradientString;
+        /*previewWindow.style.backgroundImage = `linear-gradient(45.3464363463463643deg, red, blue)`;*/
+    }
+    addColor(color, position) {
+        this.colors.push({position: position, color: color});
+        this.colorbar.addColor(color, position);
     }
 }
 
@@ -219,13 +258,55 @@ function rotateColorbar() {
 
 }
 
+function handleStartColorMouseDown(startOrEndFlag) {
+    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    function currentHandler(event) {
+        handleStartColorMove(event, parentGradientObject);
+    } 
+    previewWindow.addEventListener("mousemove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
+    previewWindow.addEventListener("mouseup", eventRemove);
+    previewWindow.addEventListener("mouseleave", eventRemove);
+}
+
+function handleStartColorMove(e, gradientObject) {
+    gradientObject.colorbar.svgObject.updateLineStart(e.offsetX, e.offsetY);
+    gradientObject.updateGradient();
+}
+
+function handleEndColorMouseDown(startOrEndFlag) {
+    console.log("test");
+    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    function currentHandler(event) {
+        handleEndColorMove(event, parentGradientObject);
+    } 
+    previewWindow.addEventListener("mousemove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
+    previewWindow.addEventListener("mouseup", eventRemove);
+    previewWindow.addEventListener("mouseleave", eventRemove);
+}
+
+function handleEndColorMove(e, gradientObject) {
+    gradientObject.colorbar.svgObject.updateLineEnd(e.offsetX, e.offsetY);
+    gradientObject.updateGradient();
+}
+
+
+
+
+// Listen for clicks on color circle, trigger color input
 colorButton.addEventListener("click", () => colorInput.click());
+// Update after giving input
 colorInput.addEventListener("change", function() {
     colorButton.style.backgroundColor = this.value;
 });
 
-const initialColors = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}]
-const cb = new Colorbar({initialColors: initialColors});
+const gradientArray = [];
+
+
+const gradient = new Gradient();
+
+gradientArray.push(gradient);
 
 
 /*svgElem.children[0].children[2].addEventListener("mousedown", () => console.log("y"));*/
