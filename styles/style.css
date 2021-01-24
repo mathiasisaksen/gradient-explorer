@@ -165,7 +165,7 @@ svg line {
     cursor: crosshair;
 }
 
-svg .colorbar.hidden {
+.hidden {
     display: none;
 }
 
