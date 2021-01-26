@@ -85,6 +85,8 @@ class Colorbar {
         colorContainer.append(colorElement);
         this.svgElements.colors[colorId] = colorElement;
         this.updatePositions();
+
+        colorElement.addEventListener("mousedown", handleColorMouseDown);
     }
 
     updateColor(color, colorId) {
@@ -237,10 +239,20 @@ class Colorbar {
         this.updatePositions();
     }
 
+    getLineStart() {
+        const line = this.svgElements.line;
+        return({x: line.getAttribute("x1"), y: line.getAttribute("y1")});
+    }
+
     updateLineEnd(x, y) {
         this.lineEndX = x;
         this.lineEndY = y;
         this.updatePositions();
+    }
+
+    getLineEnd() {
+        const line = this.svgElements.line;
+        return({x: line.getAttribute("x2"), y: line.getAttribute("y2")});
     }
 
     addInitialListeners() {
@@ -261,6 +273,7 @@ class Gradient {
     constructor(colors = DEFAULT_COLORS) {
         this.layerId = numberOfLayers;
         numberOfLayers++;
+        // Creates object on the form {0: {color: #, position: #}, 1: {color: #, position#}}
         this.colors = Object.assign({}, DEFAULT_COLORS);
         this.totalNumberOfColors = DEFAULT_COLORS.length;
         this.sortColors();
@@ -285,10 +298,10 @@ class Gradient {
     }
 
     addColor(color, position) {
-        this.totalNumberOfColors++;
         this.colors[this.totalNumberOfColors] = {position: position, color: color};
         this.colorbar.addColor(color, this.totalNumberOfColors);
         this.updateGradient();
+        this.totalNumberOfColors++;
     }
 
     updateColor(color, colorId) {
@@ -296,6 +309,12 @@ class Gradient {
         this.colorbar.updateColor(color, colorId);
         this.updateGradient();
     }
+
+    updateColorPosition(position, colorId) {
+        this.colors[colorId].position = position;
+        this.colorbar.updatePositions();
+        this.updateGradient();
+    };
 }
 
 function hideColorbar() {
@@ -351,7 +370,27 @@ function handleColorbarClick(e) {
     parentGradientObject.addColor(DEFAULT_NEW_COLOR, colorPosition);
 }
 
+function handleColorMouseDown() {
+    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const lineStart = parentGradientObject.colorbar.getLineStart();
+    const lineEnd = parentGradientObject.colorbar.getLineEnd();
+    const colorId = this.getAttribute("color-id");
+    function currentHandler(event) {
+        handleColorMove(event, lineStart, lineEnd, colorId, parentGradientObject);
+    } 
+    previewWindow.addEventListener("mousemove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
+    previewWindow.addEventListener("mouseup", eventRemove);
+    previewWindow.addEventListener("mouseleave", eventRemove);
+}
 
+function handleColorMove(e, lineStart, lineEnd, colorId, gradientObject) {
+    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
+    gradientObject.updateColorPosition(colorPosition, colorId);
+    gradientObject.updateGradient();
+    console.log(e);
+}
 
 
 // Listen for clicks on color circle, trigger color input
@@ -361,11 +400,11 @@ colorInput.addEventListener("change", function() {
     colorButton.style.backgroundColor = this.value;
 });
 
-const gradientArray = [];
+const gradientArray = {};
 
 const gradient = new Gradient();
 
-gradientArray.push(gradient);
+gradientArray[gradient.layerId] = gradient;
 
 
 /*svgElem.children[0].children[2].addEventListener("mousedown", () => console.log("y"));*/
