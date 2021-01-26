@@ -49,6 +49,15 @@ class Colorbar {
     constructor(gradient) {
         this.gradient = gradient;
         this.svgElements = {};
+        
+        this.startColorId = Object.keys(gradient.colors)[0];
+        this.endColorId = this.startColorId;
+        const colors = gradient.colors;
+        for (const colorId in colors) {
+            this.startColorId = colors[colorId].position < colors[this.startColorId].position ? colorId : this.startColorId;
+            this.endColorId = colors[colorId].position > colors[this.endColorId].position ? colorId : this.endColorId;
+        }
+
         this.initialSVGSetup();
     }
 
@@ -87,10 +96,20 @@ class Colorbar {
         this.updatePositions();
 
         colorElement.addEventListener("mousedown", handleColorMouseDown);
+        colorElement.addEventListener("click", handleColorClick);
     }
 
     updateColor(color, colorId) {
         this.svgElements.colors[colorId].setAttribute("fill", color);
+    }
+
+    removeColor(colorId) {
+        if (colorId == this.startColorId || colorId == this.endColorId) {
+            return(false);
+        }
+        const colorToRemove = this.colorContainer.querySelector(`[color-id="${colorId}"]`);
+        colorToRemove.remove();
+        return(true);
     }
 
     setupSVGStructure() {
@@ -104,27 +123,19 @@ class Colorbar {
 
         // Main line, on which the colors are placed
         const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("linecap", "round");
-        line.setAttribute("stroke", COLORBAR_FILL);
-        line.setAttribute("stroke-width", COLORBAR_WIDTH);
-
-        line.setAttribute("layer-id", this.gradient.layerId);
-        line.classList.add("svg-colorline")
+        this.setLineAttributes(line, 1, "");
+        line.classList.add("svg-colorline");
         
         elements.line = line;
         structureContainer.append(line);
 
         // Extender which connects line to rotation button
         const extender = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        this.setLineAttributes(extender, 1 / 3, "2, 2");
         
-        extender.setAttribute("linecap", "round");
-        extender.setAttribute("stroke-dasharray", "2, 2");
-        extender.setAttribute("stroke", COLORBAR_FILL);
-        extender.setAttribute("stroke-width", COLORBAR_WIDTH / 3);
-
-        extender.setAttribute("layer-id", this.gradient.layerId);
-        elements.extender = extender;
         extender.classList.add("svg-extender");
+        
+        elements.extender = extender;
         structureContainer.append(extender);
 
         // Button used for changing direction of gradient
@@ -157,6 +168,7 @@ class Colorbar {
         
         colorBarContainer.append(svgContainer);
 
+        this.colorContainer = colorContainer;
         this.svgContainer = svgContainer;
         this.svgElements = elements;
     }
@@ -257,14 +269,11 @@ class Colorbar {
 
     addInitialListeners() {
         const colors = this.gradient.colors;
-        let startId = Object.keys(colors)[0];
-        let endId = startId;
-        for (const colorId in colors) {
-            startId = colors[colorId].position < colors[startId].position ? colorId : startId;
-            endId = colors[colorId].position > colors[endId].position ? colorId : endId;
-        }
-        this.svgElements.colors[startId].addEventListener("mousedown", handleStartColorMouseDown);
-        this.svgElements.colors[endId].addEventListener("mousedown", handleEndColorMouseDown);
+
+        this.svgElements.colors[this.startColorId].addEventListener("mousedown", handleStartColorMouseDown);
+        this.svgElements.colors[this.startColorId].addEventListener("click", handleColorClick);
+        this.svgElements.colors[this.endColorId].addEventListener("mousedown", handleEndColorMouseDown);
+        this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);
         this.svgElements.line.addEventListener("click", handleColorbarClick);
     }
 }
@@ -315,17 +324,18 @@ class Gradient {
         this.colorbar.updatePositions();
         this.updateGradient();
     };
+
+    removeColor(colorId) {
+        const colorRemoved = this.colorbar.removeColor(colorId);
+        if (colorRemoved) {
+            delete this.colors[colorId]
+            this.updateGradient();
+        }
+        return colorRemoved;
+    }
 }
 
-function hideColorbar() {
-
-}
-
-function handleRotation() {
-
-}
-
-function rotateColorbar() {
+function updateColorSelectionPanel() {
 
 }
 
@@ -390,6 +400,10 @@ function handleColorMove(e, lineStart, lineEnd, colorId, gradientObject) {
     gradientObject.updateColorPosition(colorPosition, colorId);
     gradientObject.updateGradient();
     console.log(e);
+}
+
+function handleColorClick() {
+    console.log(this);
 }
 
 
