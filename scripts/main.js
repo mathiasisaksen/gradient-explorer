@@ -8,15 +8,19 @@ const COLORBAR_CIRCLE_STROKE = 3;
 const COLORBAR_INITIAL_DIRECTION = 45;
 const COLORBAR_PADDING = 2;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
-const DEFAULT_NEW_COLOR = "red";
+const DEFAULT_NEW_COLOR = "#FFFFFF";
 
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
+const opacityInput = document.querySelector("#opacity-selector input");
 const previewWindow = document.querySelector("#preview-window");
 const colorBarContainer = document.querySelector("#colorbar-container");
 const hideButton = document.querySelector("#hide-colorbar");
 
+opacityInput.value = "100";
 let numberOfLayers = 0;
+let currentColorId = null;
+let currentLayerId = null;
 
 function interpolatePosition(startPoint, endPoint, weight) {
     const x = startPoint.x + 
@@ -43,6 +47,19 @@ function computeWeightOfNearestPointOnLine(point, lineStart, lineEnd) {
 function computeNearestPointOnLine(point, lineStart, lineEnd) {
     const weight = computeWeightOfNearestPointOnLine(point, lineStart, lineEnd);
     return(interpolatePosition(lineStart, lineEnd, 100 * weight));
+}
+
+function setColorOpacity(hexColor, opacity) {
+    const hexOpacity = Math.floor(255 * opacity).toString(16).padStart(2, "0");
+    const colorWithoutOpacity = stripColorOpacity(hexColor);
+    return(colorWithoutOpacity + hexOpacity);
+}
+
+function stripColorOpacity(hexColor) {
+    if (hexColor.length > 7) {
+        return(hexColor.slice(0, 7));
+    }
+    return(hexColor);
 }
 
 class Colorbar {
@@ -97,6 +114,7 @@ class Colorbar {
 
         colorElement.addEventListener("mousedown", handleColorMouseDown);
         colorElement.addEventListener("click", handleColorClick);
+        handleColorClick.call(colorElement);
     }
 
     updateColor(color, colorId) {
@@ -115,6 +133,7 @@ class Colorbar {
     setupSVGStructure() {
         const elements = {};
         const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        svgContainer.classList.add("svg-colorbar-container");
         svgContainer.setAttribute("layer-id", this.gradient.layerId);
         
         // Contains the main part of the colorbar, except the color circles
@@ -284,6 +303,7 @@ class Gradient {
         numberOfLayers++;
         // Creates object on the form {0: {color: #, position: #}, 1: {color: #, position#}}
         this.colors = Object.assign({}, DEFAULT_COLORS);
+        /*this.opacity = color.map(color => 100);*/
         this.totalNumberOfColors = DEFAULT_COLORS.length;
         this.sortColors();
         this.colorbar = new Colorbar(this);
@@ -313,6 +333,10 @@ class Gradient {
         this.totalNumberOfColors++;
     }
 
+    getColor(colorId) {
+        return(this.colors[colorId].color);
+    }
+
     updateColor(color, colorId) {
         this.colors[colorId].color = color;
         this.colorbar.updateColor(color, colorId);
@@ -335,12 +359,14 @@ class Gradient {
     }
 }
 
-function updateColorSelectionPanel() {
-
+function toggleColorbar() {
+    const colorbar = document.querySelector(`.svg-colorbar-container[layer-id="${currentLayerId}"]`);
+    colorbar.classList.toggle("hidden");
+    hideButton.textContent = hideButton.textContent === "Hide" ? "Show" : "Hide";
 }
 
 function handleStartColorMouseDown() {
-    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleStartColorMove(event, parentGradientObject);
     } 
@@ -356,7 +382,7 @@ function handleStartColorMove(e, gradientObject) {
 }
 
 function handleEndColorMouseDown() {
-    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleEndColorMove(event, parentGradientObject);
     } 
@@ -372,7 +398,7 @@ function handleEndColorMove(e, gradientObject) {
 }
 
 function handleColorbarClick(e) {
-    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
     const clickPosition = {x: e.offsetX, y: e.offsetY};
@@ -381,7 +407,7 @@ function handleColorbarClick(e) {
 }
 
 function handleColorMouseDown() {
-    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
     const lineStart = parentGradientObject.colorbar.getLineStart();
     const lineEnd = parentGradientObject.colorbar.getLineEnd();
     const colorId = this.getAttribute("color-id");
@@ -403,22 +429,46 @@ function handleColorMove(e, lineStart, lineEnd, colorId, gradientObject) {
 }
 
 function handleColorClick() {
-    console.log(this);
+    const layerId = this.getAttribute("layer-id");
+    const colorId = this.getAttribute("color-id");
+    currentColorId = colorId;
+    currentLayerId = layerId;
+    const currentColor = gradientContainer[layerId].getColor(colorId);
+    colorButton.style.backgroundColor = stripColorOpacity(currentColor);
+    colorInput.value = stripColorOpacity(currentColor);
 }
 
+function handleColorChange() {
+    colorButton.style.backgroundColor = this.value;
+    const currentGradient = gradientContainer[currentLayerId];
+    if (currentGradient) {
+        currentGradient.updateColor(this.value, currentColorId);
+    }
+}
+
+function handleOpacityChange() {
+    const currentOpacity = this.value;
+    const currentColor = colorInput.value;
+    const colorWithOpacity = setColorOpacity(currentColor, currentOpacity);
+    const currentGradient = gradientContainer[currentLayerId];
+    if (currentGradient) {
+        currentGradient.updateColor(colorWithOpacity, currentColorId);
+    }
+}
 
 // Listen for clicks on color circle, trigger color input
 colorButton.addEventListener("click", () => colorInput.click());
 // Update after giving input
-colorInput.addEventListener("change", function() {
-    colorButton.style.backgroundColor = this.value;
-});
+colorInput.addEventListener("input", handleColorChange);
 
-const gradientArray = {};
+// Listen for changes in opacity
+opacityInput.addEventListener("input", handleOpacityChange)
+
+hideButton.addEventListener("click", toggleColorbar);
+
+const gradientContainer = {};
 
 const gradient = new Gradient();
 
-gradientArray[gradient.layerId] = gradient;
+gradientContainer[gradient.layerId] = gradient;
 
-
-/*svgElem.children[0].children[2].addEventListener("mousedown", () => console.log("y"));*/
