@@ -1,6 +1,6 @@
 
 const COLORBAR_LENGTH = 400;
-const COLORBAR_WIDTH = 5;
+const COLORBAR_WIDTH = 7;
 const COLORBAR_EXTENSION = 70;
 const COLORBAR_RADIUS = 10;
 const COLORBAR_FILL = "#222222"
@@ -8,6 +8,7 @@ const COLORBAR_CIRCLE_STROKE = 3;
 const COLORBAR_INITIAL_DIRECTION = 45;
 const COLORBAR_PADDING = 2;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
+const DEFAULT_NEW_COLOR = "red";
 
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
@@ -19,14 +20,29 @@ let numberOfLayers = 0;
 
 function interpolatePosition(startPoint, endPoint, weight) {
     const x = startPoint.x + 
-        (endPoint.x - startPoint.x) * parseFloat(weight)/100;
+        (endPoint.x - startPoint.x) * parseFloat(weight) / 100;
     const y = startPoint.y + 
-        (endPoint.y - startPoint.y) * parseFloat(weight)/100;
+        (endPoint.y - startPoint.y) * parseFloat(weight) / 100;
     return({x: x, y: y});
 }
 
-function nearestPointOnLine(point, lineStart, lineEnd) {
+function computeWeightOfNearestPointOnLine(point, lineStart, lineEnd) {
+    const u = {x: lineEnd.x - lineStart.x, y: lineEnd.y - lineStart.y};
+    const v = {x: point.x - lineStart.x, y: point.y - lineStart.y};
+    const uLength2 = u.x**2 + u.y**2;
+    const uvProd = u.x * v.x + u.y * v.y;
+    const weight = uvProd/uLength2;
+    if (weight >= 1) {
+        return 1;
+    } else if (weight <= 0) {
+        return 0;
+    }
+    return(weight);
+}
 
+function computeNearestPointOnLine(point, lineStart, lineEnd) {
+    const weight = computeWeightOfNearestPointOnLine(point, lineStart, lineEnd);
+    return(interpolatePosition(lineStart, lineEnd, 100 * weight));
 }
 
 class Colorbar {
@@ -67,8 +83,12 @@ class Colorbar {
         const colorElement = this.generateColorElement(color, colorId);
         const colorContainer = document.querySelector(`.svg-color-container[layer-id="${this.gradient.layerId}"]`)
         colorContainer.append(colorElement);
-        this.svgElements.colors.push(colorElement);
+        this.svgElements.colors[colorId] = colorElement;
         this.updatePositions();
+    }
+
+    updateColor(color, colorId) {
+        this.svgElements.colors[colorId].setAttribute("fill", color);
     }
 
     setupSVGStructure() {
@@ -121,21 +141,21 @@ class Colorbar {
         svgContainer.append(structureContainer);
 
         // Contains the color circles
-        const colors = this.gradient.colors;
-
         const colorContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
         colorContainer.classList.add("svg-color-container");
+        const colors = this.gradient.colors;
         colorContainer.setAttribute("layer-id", this.gradient.layerId);
-        elements.colors = [];
-        for (let i = 0; i < colors.length; i++) {
-            const colorElement = this.generateColorElement(colors[i].color, i);
-            elements.colors.push(colorElement);
+        elements.colors = {};
+        for (const colorId in this.gradient.colors) {
+            const colorElement = this.generateColorElement(colors[colorId].color, colorId);
+            elements.colors[colorId] = colorElement;
             colorContainer.append(colorElement);
         }
-
         svgContainer.append(colorContainer);
-        this.svgContainer = svgContainer;
+        
         colorBarContainer.append(svgContainer);
+
+        this.svgContainer = svgContainer;
         this.svgElements = elements;
     }
 
@@ -158,13 +178,28 @@ class Colorbar {
                             Math.sin(direction * Math.PI / 180);
                             
         const colors = this.gradient.colors;
-        p.colors = [];
-        for (let i = 0; i < colors.length; i++) {
-            p.colors[i] = interpolatePosition(
+        p.colors = {};
+        for (const colorId in colors) {
+            p.colors[colorId] = interpolatePosition(
                 {x: p.lineStartX, y: p.lineStartY},
-                {x: p.lineEndX, y: p.lineEndY}, colors[i].position);
+                {x: p.lineEndX, y: p.lineEndY}, colors[colorId].position);
         }
         return(p);
+    }
+
+    setLinePositions(lineStartX, lineStartY, lineEndX, lineEndY) {
+        line.setAttribute("x1", lineStartX);
+        line.setAttribute("y1", lineStartY);
+        line.setAttribute("x2", lineEndX);
+        line.setAttribute("y2", lineEndY);
+    }
+
+    setLineAttributes(line, widthFactor, strokeDash) {
+        line.setAttribute("linecap", "round");
+        line.setAttribute("stroke-dasharray", strokeDash);
+        line.setAttribute("stroke", COLORBAR_FILL);
+        line.setAttribute("stroke-width", COLORBAR_WIDTH*widthFactor);
+        line.setAttribute("layer-id", this.gradient.layerId);
     }
 
     updatePositions() {
@@ -184,9 +219,9 @@ class Colorbar {
         this.svgElements.rotationButton.setAttribute("cy", p.rotationY);
         
         const colors = this.gradient.colors;
-        for (let i = 0; i < colors.length; i++) {
-            this.svgElements.colors[i].setAttribute("cx", p.colors[i].x);
-            this.svgElements.colors[i].setAttribute("cy", p.colors[i].y);
+        for (const colorId in colors) {
+            this.svgElements.colors[colorId].setAttribute("cx", p.colors[colorId].x);
+            this.svgElements.colors[colorId].setAttribute("cy", p.colors[colorId].y);
         }
     }
 
@@ -209,42 +244,56 @@ class Colorbar {
     }
 
     addInitialListeners() {
-        const numColors = this.svgElements.colors.length;
-        this.svgElements.colors[0].addEventListener("mousedown", handleStartColorMouseDown);
-        this.svgElements.colors[numColors - 1].addEventListener("mousedown", handleEndColorMouseDown);
-        console.log(this.svgElements.colors[numColors-1]);
+        const colors = this.gradient.colors;
+        let startId = Object.keys(colors)[0];
+        let endId = startId;
+        for (const colorId in colors) {
+            startId = colors[colorId].position < colors[startId].position ? colorId : startId;
+            endId = colors[colorId].position > colors[endId].position ? colorId : endId;
+        }
+        this.svgElements.colors[startId].addEventListener("mousedown", handleStartColorMouseDown);
+        this.svgElements.colors[endId].addEventListener("mousedown", handleEndColorMouseDown);
+        this.svgElements.line.addEventListener("click", handleColorbarClick);
     }
-
 }
 
 class Gradient {
     constructor(colors = DEFAULT_COLORS) {
         this.layerId = numberOfLayers;
         numberOfLayers++;
-        this.colors = colors;
+        this.colors = Object.assign({}, DEFAULT_COLORS);
+        this.totalNumberOfColors = DEFAULT_COLORS.length;
         this.sortColors();
         this.colorbar = new Colorbar(this);
+        this.gradientString;
     }
 
     updateGradient() {
+        this.sortColors();
         const direction = this.colorbar.direction + 90;
         const colorString = this.sortedColors.map(obj => `${obj.color} ${obj.position}%`).join(", ");
-        const gradientString = `linear-gradient(${direction}deg, ${colorString})`;
-        previewWindow.style.backgroundImage = gradientString;
-        console.log(gradientString);
-        /*previewWindow.style.backgroundImage = `linear-gradient(45.3464363463463643deg, red, blue)`;*/
+        this.gradientString = `linear-gradient(${direction}deg, ${colorString})`;
+        previewWindow.style.backgroundImage = this.gradientString;
+        console.log(this.gradientString);
     }
 
+    // Creates an array of objects containing colors and associated positions on the gradient.
+    // The array is sorted by position, so that the order becomes correct in the CSS gradient.
     sortColors() {
-        this.sortedColors = this.colors.slice();
+        this.sortedColors = Object.values(this.colors);
         this.sortedColors.sort((a, b) => a.position > b.position ? 1 : -1);
     }
 
     addColor(color, position) {
-        this.colors.push({position: position, color: color});
-        this.sortColors();
-        this.colorbar.addColor(color, position);
-        this.sortColors();
+        this.totalNumberOfColors++;
+        this.colors[this.totalNumberOfColors] = {position: position, color: color};
+        this.colorbar.addColor(color, this.totalNumberOfColors);
+        this.updateGradient();
+    }
+
+    updateColor(color, colorId) {
+        this.colors[colorId].color = color;
+        this.colorbar.updateColor(color, colorId);
         this.updateGradient();
     }
 }
@@ -261,7 +310,7 @@ function rotateColorbar() {
 
 }
 
-function handleStartColorMouseDown(startOrEndFlag) {
+function handleStartColorMouseDown() {
     const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleStartColorMove(event, parentGradientObject);
@@ -277,8 +326,7 @@ function handleStartColorMove(e, gradientObject) {
     gradientObject.updateGradient();
 }
 
-function handleEndColorMouseDown(startOrEndFlag) {
-    console.log("test");
+function handleEndColorMouseDown() {
     const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleEndColorMove(event, parentGradientObject);
@@ -294,6 +342,15 @@ function handleEndColorMove(e, gradientObject) {
     gradientObject.updateGradient();
 }
 
+function handleColorbarClick(e) {
+    const parentGradientObject = gradientArray[this.getAttribute("layer-id")];
+    const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
+    const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
+    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
+    parentGradientObject.addColor(DEFAULT_NEW_COLOR, colorPosition);
+}
+
 
 
 
@@ -305,7 +362,6 @@ colorInput.addEventListener("change", function() {
 });
 
 const gradientArray = [];
-
 
 const gradient = new Gradient();
 
