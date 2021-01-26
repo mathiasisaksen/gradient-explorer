@@ -62,6 +62,13 @@ function stripColorOpacity(hexColor) {
     return(hexColor);
 }
 
+function getColorOpacity(hexColor) {
+    if (hexColor.length < 9) {
+        return(1)
+    }
+    return(parseInt(hexColor.slice(-2), 16)/255);
+}
+
 class Colorbar {
     constructor(gradient) {
         this.gradient = gradient;
@@ -434,8 +441,10 @@ function handleColorClick() {
     currentColorId = colorId;
     currentLayerId = layerId;
     const currentColor = gradientContainer[layerId].getColor(colorId);
-    colorButton.style.backgroundColor = stripColorOpacity(currentColor);
-    colorInput.value = stripColorOpacity(currentColor);
+    const colorWithOpacity = stripColorOpacity(currentColor);
+    colorButton.style.backgroundColor = colorWithOpacity;
+    colorInput.value = colorWithOpacity;
+    opacityInput.value = getColorOpacity(currentColor);
 }
 
 function handleColorChange() {
