@@ -70,6 +70,10 @@ function getColorOpacity(hexColor) {
     return(parseInt(hexColor.slice(-2), 16)/255);
 }
 
+function getIndexOfElementInParent(element) {
+    return([...element.parentNode.childNodes].indexOf(element));
+}
+
 class Colorbar {
     constructor(gradient) {
         this.gradient = gradient;
@@ -405,6 +409,7 @@ class Layer {
         const setOpacityButton = document.createElement("button");
         setOpacityButton.classList.add("layer-button", "opacity-button");
         setOpacityButton.textContent = "Set global opacity"
+        setOpacityButton.setAttribute("title", "Sets the opacity of every color in the layer");
         layerOpacityContainer.append(setOpacityButton);
 
         const layerOpacityInputContainer = document.createElement("div");
@@ -425,24 +430,31 @@ class Layer {
         cssButton.classList.add("layer-button", "layer-css-button");
         cssButton.setAttribute("layer-id", this.layerId);
         cssButton.textContent = "Copy CSS";
+        cssButton.setAttribute("title", "Copies the CSS code of the layer's gradient");
         layerButtonContainer.append(cssButton);
 
         const upButton = document.createElement("button");
         upButton.classList.add("layer-button", "direction-button", "up-button");
         upButton.setAttribute("layer-id", this.layerId);
         upButton.textContent = "▲";
+        upButton.setAttribute("title", "Moves the layer up");
+        upButton.addEventListener("click", handleMoveLayerUp);
         layerButtonContainer.append(upButton);
 
         const downButton = document.createElement("button");
         downButton.classList.add("layer-button", "direction-button", "down-button");
         downButton.setAttribute("layer-id", this.layerId);
         downButton.textContent = "▼";
+        downButton.setAttribute("title", "Moves the layer down");
+        downButton.addEventListener("click", handleMoveLayerDown);
         layerButtonContainer.append(downButton);
 
         const removeButton = document.createElement("button");
         removeButton.classList.add("layer-button", "direction-button", "remove-button");
         removeButton.setAttribute("layer-id", this.layerId);
         removeButton.textContent = "×";
+        removeButton.setAttribute("title", "Removes the layer");
+        removeButton.addEventListener("click", handleRemoveLayer);
         layerButtonContainer.append(removeButton);
 
         layerContainer.append(layerButtonContainer);
@@ -552,6 +564,27 @@ function handleOpacityChange() {
     }
 }
 
+function handleMoveLayerUp() {
+    const layerContainer = this.closest(".layer-container");
+    const oldIndex = getIndexOfElementInParent(layerContainer);
+    if (oldIndex == 0) return;
+    layerList.removeChild(layerContainer);
+    layerList.insertBefore(layerContainer, layerList.childNodes[oldIndex - 1]);
+}
+
+function handleMoveLayerDown() {
+    const layerContainer = this.closest(".layer-container");
+    const oldIndex = getIndexOfElementInParent(layerContainer);
+    if (oldIndex == layerList.childNodes.length - 1) return;
+    layerList.removeChild(layerContainer);
+    layerList.insertBefore(layerContainer, layerList.childNodes[oldIndex + 1]);
+}
+
+function handleRemoveLayer() {
+    const layerContainer = this.closest(".layer-container");
+    layerList.removeChild(layerContainer);
+}
+
 // Listen for clicks on color circle, trigger color input
 colorButton.addEventListener("click", () => colorInput.click());
 // Update after giving input
@@ -564,7 +597,13 @@ hideButton.addEventListener("click", toggleColorbar);
 
 const gradientContainer = {};
 
+const layerContainer = {};
+const newLayer = new Layer();
+layerContainer[newLayer.layerId] = newLayer;
+
+
 const gradient = new Gradient();
+
 
 gradientContainer[gradient.layerId] = gradient;
 gradient.colorbar.setupColorbar();
