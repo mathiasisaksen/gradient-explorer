@@ -11,8 +11,9 @@
     <main>
         <div id="preview-window">
             <svg id="colorbar-container"></svg>
-              <div id="hide-container">
-                  <button id="hide-colorbar">Hide</button>
+              <div id="preview-button-container">
+                  <button id="resize-colorbar">Resize & center colorbar</button>
+                  <button id="hide-colorbar">Hide colorbar</button>
               </div>
         </div>
         <div id="layer-panel">
@@ -24,11 +25,16 @@
                     </div>
                     <div class="layer-title"><p>Layer 1</p></div>
                     <div class="layer-button-container">
-                        <button class="layer-button">Set global opacity</button>
-                        <button class="layer-button">Copy CSS</button>
+                        <div class="layer-opacity-container">
+                            <button class="layer-button opacity-button">Set global opacity</button>
+                            <div class="layer-opacity-input-container">
+                                <input type="range" name="opacity" class="layer-opacity-selector" min="0" max="1" step="0.01">
+                            </div>
+                        </div>
+                        <button class="layer-button layer-css-button">Copy CSS</button>
                         <button class="layer-button direction-button up-button">▲</button>
                         <button class="layer-button direction-button down-button">▼</button>
-                        <button class="layer-button direction-button">×</button>
+                        <button class="layer-button direction-button remove-button">×</button>
                     </div>
                 </div>
                 <div class="layer-container" layer-id="1">
@@ -37,11 +43,16 @@
                     </div>
                     <div class="layer-title"><p>Layer 2</p></div>
                     <div class="layer-button-container">
-                        <button class="layer-button">Set global opacity</button>
-                        <button class="layer-button">Copy CSS</button>
+                        <div class="layer-opacity-container">
+                            <button class="layer-button opacity-button">Set global opacity</button>
+                            <div class="layer-opacity-input-container">
+                                <input type="range" name="opacity" class="layer-opacity-selector" min="0" max="1" step="0.01">
+                            </div>
+                        </div>
+                        <button class="layer-button layer-css-button">Copy CSS</button>
                         <button class="layer-button direction-button up-button">▲</button>
                         <button class="layer-button direction-button down-button">▼</button>
-                        <button class="layer-button direction-button">×</button>
+                        <button class="layer-button direction-button remove-button">×</button>
                     </div>
                 </div>
                 <div class="layer-container" layer-id="2">

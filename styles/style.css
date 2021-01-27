@@ -1,7 +1,8 @@
 :root {
     --panel-background: white;
     --panel-accent: rgb(34, 34, 34);
-    --panel-text-color: rgb(252, 252, 252);
+    --panel-text-color: #fcfcfc;
+    --panel-layer-background: #222222;
 }
 
 html, body {
@@ -25,33 +26,32 @@ main {
 #preview-window {
     position: relative;
     border-right: 2px solid var(--panel-accent);
-    
     height: 100%;
-    /*width: 100%;*/
     flex-grow: 1;
-    /*width: 500px;*/
     background: linear-gradient(135deg, #ff95f3, #008080);
 }
 
-#hide-container {
+#preview-button-container {
+    display: flex;
     position: absolute;
     bottom: 15px;
     right: 15px;
 }
 
-#hide-colorbar {
-    width: 80px;
-    height: 40px;
+#preview-button-container button {
+    margin: 0 7px 0 7px;
+    width: 100px;
+    height: 50px;
     opacity: 0.2;
     border-radius: 15px;
     outline: none;
     background-color: var(--panel-background);
-    font-size: 1em;
+    font-size: 0.7em;
     transition: opacity 0.3s;
     font-weight: 600;
 }
 
-#hide-colorbar:hover {
+#preview-button-container button:hover {
     opacity: 1;
 }
 
@@ -93,7 +93,7 @@ main {
 
 .layer-container {
     height: 60px;
-    background-color: var(--panel-accent);
+    background-color: var(--panel-layer-background);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -143,8 +143,12 @@ main {
     height: 100%;
 }
 
-.layer-title:not(.current-layer) {
+.layer-title {
     cursor: pointer;
+}
+
+.current-layer .layer-title {
+    cursor: default;
 }
 
 .layer-button-container {
@@ -158,7 +162,7 @@ main {
 }
 
 
-.layer-button {
+.layer-button, .layer-opacity-container{
     background-color: transparent;
     cursor: pointer;
     font-weight: 600;
@@ -172,7 +176,15 @@ main {
     transition: border 0.3s ease;
 }
 
+.layer-opacity-container {
+    position: relative;
+}
+
 .layer-button:hover {
+    background-color: #9d9d9d55;
+}
+
+.current-layer .layer-button:hover {
     background-color: #00000055;
 }
 
@@ -199,6 +211,22 @@ main {
     background-color: transparent;
 }
 
+
+.layer-opacity-input-container {
+    top: 25%;
+    position: absolute;
+    background-color: white;
+    padding: 6px 5px 6px 5px;
+    border-radius: 5px;
+}
+
+.layer-opacity-selector {
+    margin: 0 auto;
+    width: 100%;
+}
+
+
+
 #color-picker {
     display: flex;
     flex-direction: column;
@@ -223,8 +251,8 @@ main {
     position: relative;
     left: -7px;
     background-color: violet;
-    height: 30px;
-    width: 30px;
+    height: 40px;
+    width: 40px;
     padding: 0;
     margin: 15px;
     border-radius: 50%;

@@ -16,6 +16,7 @@ const opacityInput = document.querySelector("#opacity-selector input");
 const previewWindow = document.querySelector("#preview-window");
 const colorBarContainer = document.querySelector("#colorbar-container");
 const hideButton = document.querySelector("#hide-colorbar");
+const layerList = document.querySelector("#layer-list");
 
 opacityInput.value = "100";
 let numberOfLayers = 0;
@@ -72,6 +73,9 @@ function getColorOpacity(hexColor) {
 class Colorbar {
     constructor(gradient) {
         this.gradient = gradient;
+    }
+
+    setupColorbar() {
         this.svgElements = {};
         
         this.startColorId = Object.keys(gradient.colors)[0];
@@ -81,7 +85,6 @@ class Colorbar {
             this.startColorId = colors[colorId].position < colors[this.startColorId].position ? colorId : this.startColorId;
             this.endColorId = colors[colorId].position > colors[this.endColorId].position ? colorId : this.endColorId;
         }
-
         this.initialSVGSetup();
     }
 
@@ -301,13 +304,13 @@ class Colorbar {
         this.svgElements.colors[this.endColorId].addEventListener("mousedown", handleEndColorMouseDown);
         this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);
         this.svgElements.line.addEventListener("click", handleColorbarClick);
+        handleColorClick.call(this.svgElements.colors[this.endColorId]);
     }
 }
 
 class Gradient {
-    constructor(colors = DEFAULT_COLORS) {
-        this.layerId = numberOfLayers;
-        numberOfLayers++;
+    constructor(layerId, colors = DEFAULT_COLORS) {
+        this.layerId = layerId;
         // Creates object on the form {0: {color: #, position: #}, 1: {color: #, position#}}
         this.colors = Object.assign({}, DEFAULT_COLORS);
         /*this.opacity = color.map(color => 100);*/
@@ -366,10 +369,94 @@ class Gradient {
     }
 }
 
+class Layer {
+    constructor() {
+        this.layerId = numberOfLayers;
+        numberOfLayers++;
+        this.gradient = new Gradient(this.layerId, DEFAULT_COLORS);
+        this.setupLayerHTML();
+    }
+
+    setupLayerHTML() {
+        const layerContainer = document.createElement("div");
+        layerContainer.classList.add("layer-container");
+        layerContainer.setAttribute("layer-id", this.layerId);
+
+        const hideContainer = document.createElement("div");
+        hideContainer.classList.add("hide-layer-container");
+        const hideButton = document.createElement("div");
+        hideButton.classList.add("hide-layer-button");
+        hideContainer.append(hideButton);
+        layerContainer.append(hideContainer);
+
+        const layerTitle = document.createElement("div");
+        layerTitle.classList.add("layer-title")
+        const layerText = document.createElement("p");
+        layerText.innerText = `Layer ${this.layerId + 1}`;
+        layerTitle.append(layerText);
+        layerContainer.append(layerTitle);
+
+        const layerButtonContainer = document.createElement("div");
+        layerButtonContainer.classList.add("layer-button-container");
+
+        const layerOpacityContainer = document.createElement("div");
+        layerOpacityContainer.classList.add("layer-opacity-container");
+
+        const setOpacityButton = document.createElement("button");
+        setOpacityButton.classList.add("layer-button", "opacity-button");
+        setOpacityButton.textContent = "Set global opacity"
+        layerOpacityContainer.append(setOpacityButton);
+
+        const layerOpacityInputContainer = document.createElement("div");
+        layerOpacityInputContainer.classList.add("layer-opacity-input-container", "hidden");
+        const layerOpacitySelector = document.createElement("input");
+        layerOpacitySelector.classList.add("layer-opacity-selector");
+        layerOpacitySelector.setAttribute("layer-id", this.layerId);
+        layerOpacitySelector.setAttribute("type", "range");
+        layerOpacitySelector.setAttribute("min", "0");
+        layerOpacitySelector.setAttribute("max", "1");
+        layerOpacitySelector.setAttribute("step", "0.01");
+
+        layerOpacityInputContainer.append(layerOpacitySelector);
+        layerOpacityContainer.append(layerOpacityInputContainer);
+        layerButtonContainer.append(layerOpacityContainer);
+
+        const cssButton = document.createElement("button");
+        cssButton.classList.add("layer-button", "layer-css-button");
+        cssButton.setAttribute("layer-id", this.layerId);
+        cssButton.textContent = "Copy CSS";
+        layerButtonContainer.append(cssButton);
+
+        const upButton = document.createElement("button");
+        upButton.classList.add("layer-button", "direction-button", "up-button");
+        upButton.setAttribute("layer-id", this.layerId);
+        upButton.textContent = "▲";
+        layerButtonContainer.append(upButton);
+
+        const downButton = document.createElement("button");
+        downButton.classList.add("layer-button", "direction-button", "down-button");
+        downButton.setAttribute("layer-id", this.layerId);
+        downButton.textContent = "▼";
+        layerButtonContainer.append(downButton);
+
+        const removeButton = document.createElement("button");
+        removeButton.classList.add("layer-button", "direction-button", "remove-button");
+        removeButton.setAttribute("layer-id", this.layerId);
+        removeButton.textContent = "×";
+        layerButtonContainer.append(removeButton);
+
+        layerContainer.append(layerButtonContainer);
+
+        layerList.prepend(layerContainer);
+
+    }
+}
+
 function toggleColorbar() {
     const colorbar = document.querySelector(`.svg-colorbar-container[layer-id="${currentLayerId}"]`);
     colorbar.classList.toggle("hidden");
-    hideButton.textContent = hideButton.textContent === "Hide" ? "Show" : "Hide";
+    hideButton.textContent = hideButton.textContent === "Hide colorbar" ? 
+        "Show colorbar" : "Hide colorbar";
 }
 
 function handleStartColorMouseDown() {
@@ -480,4 +567,5 @@ const gradientContainer = {};
 const gradient = new Gradient();
 
 gradientContainer[gradient.layerId] = gradient;
+gradient.colorbar.setupColorbar();
 
