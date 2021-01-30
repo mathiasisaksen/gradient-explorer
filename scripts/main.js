@@ -17,11 +17,16 @@ const previewWindow = document.querySelector("#preview-window");
 const colorBarContainer = document.querySelector("#colorbar-container");
 const hideButton = document.querySelector("#hide-colorbar");
 const layerList = document.querySelector("#layer-list");
+const addLayerButton = document.querySelector("#layer-button");
+const previewWindowButtonContainer = document.querySelector("#preview-button-container");
 
 opacityInput.value = "100";
 let numberOfLayers = 0;
 let currentColorId = null;
 let currentLayerId = null;
+let showAllLayers = false;
+let showAllColorbars = false;
+let currentLayerContainer;
 
 function interpolatePosition(startPoint, endPoint, weight) {
     const x = startPoint.x + 
@@ -77,9 +82,7 @@ function getIndexOfElementInParent(element) {
 class Colorbar {
     constructor(gradient) {
         this.gradient = gradient;
-    }
 
-    setupColorbar() {
         this.svgElements = {};
         
         this.startColorId = Object.keys(gradient.colors)[0];
@@ -102,7 +105,7 @@ class Colorbar {
         this.lineEndY = previewWindow.offsetHeight / 2 + 
             COLORBAR_LENGTH / 2 * Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
         this.setupSVGStructure();
-        this.updatePositions();
+        this.updateSVGPositions();
         this.addInitialListeners();
     }
 
@@ -119,12 +122,11 @@ class Colorbar {
     }
 
     addColor(color, colorId) {
-        console.log(`${colorId} ${color}`)
         const colorElement = this.generateColorElement(color, colorId);
         const colorContainer = document.querySelector(`.svg-color-container[layer-id="${this.gradient.layerId}"]`)
         colorContainer.append(colorElement);
         this.svgElements.colors[colorId] = colorElement;
-        this.updatePositions();
+        this.updateSVGPositions();
 
         colorElement.addEventListener("mousedown", handleColorMouseDown);
         colorElement.addEventListener("click", handleColorClick);
@@ -193,6 +195,7 @@ class Colorbar {
         colorContainer.setAttribute("layer-id", this.gradient.layerId);
         elements.colors = {};
         for (const colorId in this.gradient.colors) {
+            // colors[colorId].color? Future me is going to hate this
             const colorElement = this.generateColorElement(colors[colorId].color, colorId);
             elements.colors[colorId] = colorElement;
             colorContainer.append(colorElement);
@@ -249,7 +252,7 @@ class Colorbar {
         line.setAttribute("layer-id", this.gradient.layerId);
     }
 
-    updatePositions() {
+    updateSVGPositions() {
         const p = this.computePositions();
 
         this.svgElements.line.setAttribute("x1", p.lineStartX);
@@ -281,7 +284,6 @@ class Colorbar {
     updateLineStart(x, y) {
         this.lineStartX = x;
         this.lineStartY = y;
-        this.updatePositions();
     }
 
     getLineStart() {
@@ -292,7 +294,6 @@ class Colorbar {
     updateLineEnd(x, y) {
         this.lineEndX = x;
         this.lineEndY = y;
-        this.updatePositions();
     }
 
     getLineEnd() {
@@ -315,8 +316,10 @@ class Colorbar {
 class Gradient {
     constructor(layerId, colors = DEFAULT_COLORS) {
         this.layerId = layerId;
+        // Ugly fix for removing references to array passed in Object.assign
+        const colorNoReference = JSON.parse(JSON.stringify(colors));
         // Creates object on the form {0: {color: #, position: #}, 1: {color: #, position#}}
-        this.colors = Object.assign({}, DEFAULT_COLORS);
+        this.colors = Object.assign({}, colorNoReference);
         /*this.opacity = color.map(color => 100);*/
         this.totalNumberOfColors = DEFAULT_COLORS.length;
         this.sortColors();
@@ -329,8 +332,6 @@ class Gradient {
         const direction = this.colorbar.direction + 90;
         const colorString = this.sortedColors.map(obj => `${obj.color} ${obj.position}%`).join(", ");
         this.gradientString = `linear-gradient(${direction}deg, ${colorString})`;
-        previewWindow.style.backgroundImage = this.gradientString;
-        console.log(this.gradientString);
     }
 
     // Creates an array of objects containing colors and associated positions on the gradient.
@@ -352,14 +353,22 @@ class Gradient {
     }
 
     updateColor(color, colorId) {
+        for (const layerId in layerObjects) {
+            console.log(layerId);
+            console.table(layerObjects[layerId].gradient.colors);
+        }
         this.colors[colorId].color = color;
+        for (const layerId in layerObjects) {
+            console.log(layerId);
+            console.table(layerObjects[layerId].gradient.colors);
+        }
         this.colorbar.updateColor(color, colorId);
         this.updateGradient();
     }
 
     updateColorPosition(position, colorId) {
         this.colors[colorId].position = position;
-        this.colorbar.updatePositions();
+        this.colorbar.updateSVGPositions();
         this.updateGradient();
     };
 
@@ -368,17 +377,61 @@ class Gradient {
         if (colorRemoved) {
             delete this.colors[colorId]
             this.updateGradient();
+            this.totalNumberOfColors--;
         }
-        return colorRemoved;
+        return(colorRemoved);
     }
 }
 
 class Layer {
-    constructor() {
-        this.layerId = numberOfLayers;
-        numberOfLayers++;
-        this.gradient = new Gradient(this.layerId, DEFAULT_COLORS);
+    constructor(layerId) {
+        this.layerId = layerId;
         this.setupLayerHTML();
+        this.gradient = new Gradient(this.layerId, DEFAULT_COLORS);
+        this.layerContainer;
+        this.visibleColorbar = true;
+        this.hidden = false;
+    }
+
+    toggleHidden() {
+        this.hidden = !this.hidden;
+        const colorbar = this.gradient.colorbar.svgContainer;
+        if (this.visibleColorbar && this.hidden) {
+            colorbar.classList.add("hidden");
+        } else if (this.visibleColorbar && !this.hidden && 
+                  (this.layerId === currentLayerId || showAllColorbars)) {
+            colorbar.classList.add("hidden");
+        } else {
+            colorbar.classList.remove("hidden");
+        }
+    }
+
+    get gradientString() {
+        if (this.hidden) {
+            return("none");
+        } else {
+            return(this.gradient.gradientString);
+        }
+    }
+
+    toggleColorbar() {
+        const colorbar = this.gradient.colorbar.svgContainer;
+        colorbar.classList.toggle("hidden");
+        this.visibleColorbar = !colorbar.classList.contains("hidden");
+    }
+
+    setColorbarVisibility(isVisible) {
+        this.visibleColorbar = isVisible;
+        const colorbar = this.gradient.colorbar.svgContainer;
+        if (isVisible) {
+            colorbar.classList.remove("hidden");
+        } else {
+            colorbar.classList.add("hidden");
+        }
+    }
+
+    update() {
+        this.gradient.updateGradient();
     }
 
     setupLayerHTML() {
@@ -390,6 +443,9 @@ class Layer {
         hideContainer.classList.add("hide-layer-container");
         const hideButton = document.createElement("div");
         hideButton.classList.add("hide-layer-button");
+        hideButton.setAttribute("title", "Toggles the layers visibility");
+        hideButton.addEventListener("click", handleLayerHide);
+
         hideContainer.append(hideButton);
         layerContainer.append(hideContainer);
 
@@ -398,6 +454,7 @@ class Layer {
         const layerText = document.createElement("p");
         layerText.innerText = `Layer ${this.layerId + 1}`;
         layerTitle.append(layerText);
+        layerTitle.addEventListener("click", handleTitleClick);
         layerContainer.append(layerTitle);
 
         const layerButtonContainer = document.createElement("div");
@@ -460,37 +517,61 @@ class Layer {
         layerContainer.append(layerButtonContainer);
 
         layerList.prepend(layerContainer);
+        this.layerContainer = layerContainer;
 
     }
 }
 
+function setCurrentLayer(layerContainer) {
+    const oldCurrentLayer = layerList.querySelector(".current-layer");
+    if (oldCurrentLayer) {
+        const oldLayerId = currentLayerId;
+        oldCurrentLayer.classList.remove("current-layer");
+    }
+    layerContainer.classList.add("current-layer");
+    currentLayerContainer = layerContainer;
+    currentLayerId = currentLayerContainer.getAttribute("layer-id");
+    setWindowButtonClickable(!currentLayerContainer.classList.contains("hidden-layer"));
+    if (layerObjects[currentLayerId]) {
+        hideButton.textContent = layerObjects[currentLayerId].visibleColorbar ? 
+            "Hide colorbar" : "Show colorbar";
+    }
+    /*updatePreviewWindow();*/
+}
+
 function toggleColorbar() {
-    const colorbar = document.querySelector(`.svg-colorbar-container[layer-id="${currentLayerId}"]`);
-    colorbar.classList.toggle("hidden");
-    hideButton.textContent = hideButton.textContent === "Hide colorbar" ? 
-        "Show colorbar" : "Hide colorbar";
+    if (!currentLayerContainer.classList.contains("hidden-layer")) {
+        layerObjects[currentLayerId].toggleColorbar();
+        /*const colorbar = document.querySelector(`.svg-colorbar-container[layer-id="${currentLayerId}"]`);
+        colorbar.classList.toggle("hidden");*/
+        hideButton.textContent = layerObjects[currentLayerId].visibleColorbar ? 
+            "Hide colorbar" : "Show colorbar";
+    }
 }
 
 function handleStartColorMouseDown() {
-    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
-        handleStartColorMove(event, parentGradientObject);
+        handleStartColorMove(event, layerObject);
     } 
     previewWindow.addEventListener("mousemove", currentHandler);
     const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
     previewWindow.addEventListener("mouseup", eventRemove);
     previewWindow.addEventListener("mouseleave", eventRemove);
+    // updatePreviewWindow();
 }
 
-function handleStartColorMove(e, gradientObject) {
-    gradientObject.colorbar.updateLineStart(e.offsetX, e.offsetY);
-    gradientObject.updateGradient();
+function handleStartColorMove(e, layerObject) {
+    layerObject.gradient.colorbar.updateLineStart(e.offsetX, e.offsetY);
+    layerObject.gradient.colorbar.updateSVGPositions();
+    layerObject.update();
+    // updatePreviewWindow();
 }
 
 function handleEndColorMouseDown() {
-    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
-        handleEndColorMove(event, parentGradientObject);
+        handleEndColorMove(event, layerObject);
     } 
     previewWindow.addEventListener("mousemove", currentHandler);
     const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
@@ -498,93 +579,175 @@ function handleEndColorMouseDown() {
     previewWindow.addEventListener("mouseleave", eventRemove);
 }
 
-function handleEndColorMove(e, gradientObject) {
-    gradientObject.colorbar.updateLineEnd(e.offsetX, e.offsetY);
-    gradientObject.updateGradient();
+function handleEndColorMove(e, layerObject) {
+    layerObject.gradient.colorbar.updateLineEnd(e.offsetX, e.offsetY);
+    layerObject.gradient.colorbar.updateSVGPositions();
+    layerObject.update();
+    updatePreviewWindow();
 }
 
 function handleColorbarClick(e) {
-    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
     const clickPosition = {x: e.offsetX, y: e.offsetY};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
-    parentGradientObject.addColor(DEFAULT_NEW_COLOR, colorPosition);
+    layerObject.gradient.addColor(DEFAULT_NEW_COLOR, colorPosition);
+    // updatePreviewWindow();
 }
 
 function handleColorMouseDown() {
-    const parentGradientObject = gradientContainer[this.getAttribute("layer-id")];
-    const lineStart = parentGradientObject.colorbar.getLineStart();
-    const lineEnd = parentGradientObject.colorbar.getLineEnd();
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
+    const lineStart = layerObject.gradient.colorbar.getLineStart();
+    const lineEnd = layerObject.gradient.colorbar.getLineEnd();
     const colorId = this.getAttribute("color-id");
     function currentHandler(event) {
-        handleColorMove(event, lineStart, lineEnd, colorId, parentGradientObject);
+        handleColorMove(event, lineStart, lineEnd, colorId, layerObject);
     } 
     previewWindow.addEventListener("mousemove", currentHandler);
     const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
     previewWindow.addEventListener("mouseup", eventRemove);
     previewWindow.addEventListener("mouseleave", eventRemove);
+    // updatePreviewWindow();
 }
 
-function handleColorMove(e, lineStart, lineEnd, colorId, gradientObject) {
+function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
     const clickPosition = {x: e.offsetX, y: e.offsetY};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
-    gradientObject.updateColorPosition(colorPosition, colorId);
-    gradientObject.updateGradient();
-    console.log(e);
+    layerObject.gradient.updateColorPosition(colorPosition, colorId);
+    layerObject.update();
+    // updatePreviewWindow();
 }
 
 function handleColorClick() {
     const layerId = this.getAttribute("layer-id");
     const colorId = this.getAttribute("color-id");
     currentColorId = colorId;
-    currentLayerId = layerId;
-    const currentColor = gradientContainer[layerId].getColor(colorId);
+    const correspondingLayerContainer = layerList.querySelector(`[layer-id="${layerId}"]`);
+    setCurrentLayer(correspondingLayerContainer);
+    currentColor = this.getAttribute("fill");
     const colorWithOpacity = stripColorOpacity(currentColor);
     colorButton.style.backgroundColor = colorWithOpacity;
     colorInput.value = colorWithOpacity;
     opacityInput.value = getColorOpacity(currentColor);
+    // updatePreviewWindow();
 }
 
 function handleColorChange() {
     colorButton.style.backgroundColor = this.value;
-    const currentGradient = gradientContainer[currentLayerId];
+    const currentGradient = layerObjects[currentLayerId].gradient;
     if (currentGradient) {
-        currentGradient.updateColor(this.value, currentColorId);
+        currentGradient.updateColor(this.value, currentColorId);   
     }
+    // updatePreviewWindow();
 }
 
 function handleOpacityChange() {
     const currentOpacity = this.value;
     const currentColor = colorInput.value;
     const colorWithOpacity = setColorOpacity(currentColor, currentOpacity);
-    const currentGradient = gradientContainer[currentLayerId];
+    const currentGradient = layerObjects[currentLayerId].gradient;
     if (currentGradient) {
         currentGradient.updateColor(colorWithOpacity, currentColorId);
     }
+    // updatePreviewWindow();
 }
 
 function handleMoveLayerUp() {
     const layerContainer = this.closest(".layer-container");
     const oldIndex = getIndexOfElementInParent(layerContainer);
-    if (oldIndex == 0) return;
-    layerList.removeChild(layerContainer);
-    layerList.insertBefore(layerContainer, layerList.childNodes[oldIndex - 1]);
+    if (!layerContainer.previousSibling) return;
+    layerList.insertBefore(layerContainer, layerContainer.previousSibling);
+    // updatePreviewWindow();
 }
 
 function handleMoveLayerDown() {
     const layerContainer = this.closest(".layer-container");
-    const oldIndex = getIndexOfElementInParent(layerContainer);
-    if (oldIndex == layerList.childNodes.length - 1) return;
-    layerList.removeChild(layerContainer);
-    layerList.insertBefore(layerContainer, layerList.childNodes[oldIndex + 1]);
+    if (!layerContainer.nextSibling) return;
+    layerList.insertBefore(layerContainer, layerContainer.nextSibling.nextSibling);
+    // updatePreviewWindow();
 }
 
 function handleRemoveLayer() {
     const layerContainer = this.closest(".layer-container");
+    const layerId = layerContainer.getAttribute("layer-id");
+    const isCurrent = layerContainer.classList.contains("current-layer");
+    const nextCurrentLayer = layerContainer.previousSibling || layerContainer.nextSibling;
     layerList.removeChild(layerContainer);
+    delete layerObjects[layerId];
+    if (isCurrent && nextCurrentLayer) {
+        nextCurrentLayer.classList.add("current-layer");
+        setCurrentLayer(nextCurrentLayer);
+    } 
+    if (!layerList.hasChildNodes()) {
+        setWindowButtonClickable(false);
+    }
+    const remainingElements = document.querySelectorAll(`[layer-id="${layerId}"]`);
+    [...remainingElements].forEach(node => node.parentNode.removeChild(node));
+    // updatePreviewWindow();
 }
 
+function handleTitleClick() {
+    const layerContainer = this.closest(".layer-container");
+    setCurrentLayer(layerContainer);
+    // updatePreviewWindow();
+}
+
+function handleLayerHide() {
+    const layerContainer = this.closest(".layer-container");
+    const layerId = layerContainer.getAttribute("layer-id");
+    layerContainer.classList.toggle("hidden-layer");
+    layerObjects[layerId].toggleHidden();
+    /*layerObjects[layerId].toggleColorbar();*/
+    if (layerId === currentLayerId) {
+        setWindowButtonClickable(layerObjects[layerId].visibleColorbar);
+    }
+    // updatePreviewWindow();
+}
+
+function handleAddLayer() {
+    const onlyLayer = Object.keys(layerObjects).length === 0;
+    const newLayer = new Layer(numberOfLayers++);
+    layerObjects[newLayer.layerId] = newLayer;
+    if (onlyLayer) {
+        layerList.childNodes[0].classList.add("current-layer");
+        setCurrentLayer(layerList.childNodes[0]);
+    }
+    // updatePreviewWindow();
+}
+
+function updatePreviewWindow() {
+    let gradientStringArray = [];
+    const layerArray = [...layerList.childNodes];
+    if (showAllLayers && Object.keys(layerObjects).length > 1) {
+        for (const layerIndex in layerArray) {
+            const layerContainer = layerArray[layerIndex];
+            const layerId = layerContainer.getAttribute("layer-id");
+            const layerObject = layerObjects[layerId];
+            if (!layerObject.hidden) {
+                gradientStringArray.push(layerObject.gradientString);
+            }
+        }  
+    } else {
+        if (!layerObjects[currentLayerId].hidden) {
+            gradientStringArray.push(layerObjects[currentLayerId].gradientString);
+        }
+    }
+    let combinedGradientString = gradientStringArray.join(", ");
+    combinedGradientString = combinedGradientString ? combinedGradientString : "none";
+    /*console.log(combinedGradientString);*/
+    previewWindow.style.backgroundImage = combinedGradientString;
+}
+
+function setWindowButtonClickable(clickable) {
+    if (clickable) {
+        previewWindowButtonContainer.classList.remove("unclickable")
+    } else {
+        previewWindowButtonContainer.classList.add("unclickable")
+    }
+}
+
+addLayerButton.addEventListener("click", handleAddLayer);
 // Listen for clicks on color circle, trigger color input
 colorButton.addEventListener("click", () => colorInput.click());
 // Update after giving input
@@ -595,16 +758,5 @@ opacityInput.addEventListener("input", handleOpacityChange)
 
 hideButton.addEventListener("click", toggleColorbar);
 
-const gradientContainer = {};
-
-const layerContainer = {};
-const newLayer = new Layer();
-layerContainer[newLayer.layerId] = newLayer;
-
-
-const gradient = new Gradient();
-
-
-gradientContainer[gradient.layerId] = gradient;
-gradient.colorbar.setupColorbar();
-
+const layerObjects = {};
+addLayerButton.click();

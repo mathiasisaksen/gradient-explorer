@@ -39,6 +39,7 @@ main {
 }
 
 #preview-button-container button {
+    cursor: pointer;
     margin: 0 7px 0 7px;
     width: 100px;
     height: 50px;
@@ -53,6 +54,14 @@ main {
 
 #preview-button-container button:hover {
     opacity: 1;
+}
+
+#preview-button-container.unclickable button {
+    cursor: default;
+}
+
+#preview-button-container.unclickable button {
+    opacity: 0.2;
 }
 
 #layer-panel {
@@ -129,7 +138,7 @@ main {
     
 }
 
-.hidden-layer {
+.hidden-layer .hide-layer-button {
     background-color: #FFFFFF00;
 }
 
