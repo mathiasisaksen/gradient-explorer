@@ -21,7 +21,7 @@ const addLayerButton = document.querySelector("#layer-button");
 const previewWindowButtonContainer = document.querySelector("#preview-button-container");
 const showCurrentButton = document.querySelector("#current-layer-button");
 const showAllButton = document.querySelector("#all-layers-button");
-
+const copyTotalCSSButton = document.querySelector("#copy-combined-css");
 
 opacityInput.value = "100";
 let numberOfLayers = 0;
@@ -331,9 +331,9 @@ class Gradient {
 
     updateGradient() {
         this.sortColors();
-        const direction = this.colorbar.direction + 90;
+        const direction =  this.colorbar.direction + 90;
         const colorString = this.sortedColors.map(obj => `${obj.color} ${obj.position}%`).join(", ");
-        this.gradientString = `linear-gradient(${direction}deg, ${colorString})`;
+        this.gradientString = `linear-gradient(${direction.toFixed(2)}deg, ${colorString})`;
     }
 
     // Creates an array of objects containing colors and associated positions on the gradient.
@@ -418,11 +418,7 @@ class Layer {
     }
 
     get gradientString() {
-        if (this.hiddenLayer) {
-            return("none");
-        } else {
-            return(this.gradient.gradientString);
-        }
+        return(this.gradient.gradientString);
     }
 
     update() {
@@ -500,6 +496,7 @@ class Layer {
         cssButton.setAttribute("layer-id", this.layerId);
         cssButton.textContent = "Copy CSS";
         cssButton.setAttribute("title", "Copies the CSS code of the layer's gradient");
+        cssButton.addEventListener("click", handleCopyLayerCSS);
         layerButtonContainer.append(cssButton);
 
         const upButton = document.createElement("button");
@@ -712,7 +709,10 @@ function handleRemoveLayer() {
 
 function handleTitleClick() {
     const layerContainer = this.closest(".layer-container");
-    setCurrentLayer(layerContainer);
+    const layerId = layerContainer.getAttribute("layer-id");
+    if (layerId !== currentLayerId) {
+        setCurrentLayer(layerContainer);
+    }
 }
 
 function handleLayerHide() {
@@ -747,37 +747,62 @@ function handleShowAllLayers() {
 }
 
 function handleCopyLayerCSS() {
+    const layerId = this.getAttribute("layer-id");
+    const gradientString = layerObjects[layerId].gradientString;
+    navigator.clipboard.writeText(gradientString);
+}
 
+function handleCopyFullCSS() {
+    let gradientString = getFullGradientString();
+    gradientString = gradientString ? gradientString : "none";
+    navigator.clipboard.writeText(gradientString);
+}
+
+function getCurrentGradientString() {
+    if (!Object.keys(layerObjects).length) return;
+
+    if (!layerObjects[currentLayerId].hiddenLayer) {
+        return(layerObjects[currentLayerId].gradientString);
+    } else {
+        return("");
+    }
+}
+
+function getFullGradientString() {
+    if (!Object.keys(layerObjects).length) return;
+
+    let gradientStringArray = [];
+    const layerArray = [...layerList.childNodes];
+    
+    for (const layerIndex in layerArray) {
+        const layerContainer = layerArray[layerIndex];
+        const layerId = layerContainer.getAttribute("layer-id");
+        const layerObject = layerObjects[layerId];
+        if (!layerObject.hiddenLayer) {
+            gradientStringArray.push(layerObject.gradientString);
+        }
+    }
+    let combinedGradientString = gradientStringArray.join(", ");
+    return(combinedGradientString);
 }
 
 function updatePreviewWindow() {
     if (!Object.keys(layerObjects).length) return;
-    let gradientStringArray = [];
-    const layerArray = [...layerList.childNodes];
-    if (showAllLayers && Object.keys(layerObjects).length > 1) {
-        for (const layerIndex in layerArray) {
-            const layerContainer = layerArray[layerIndex];
-            const layerId = layerContainer.getAttribute("layer-id");
-            const layerObject = layerObjects[layerId];
-            if (!layerObject.hidden) {
-                gradientStringArray.push(layerObject.gradientString);
-            }
-        }  
+    let gradientString;
+    if (showAllLayers) {
+        gradientString = getFullGradientString();
     } else {
-        if (!layerObjects[currentLayerId].hidden) {
-            gradientStringArray.push(layerObjects[currentLayerId].gradientString);
-        }
+        gradientString = getCurrentGradientString();
     }
-    let combinedGradientString = gradientStringArray.join(", ");
-    combinedGradientString = combinedGradientString ? combinedGradientString : "none";
-    previewWindow.style.backgroundImage = combinedGradientString;
+    gradientString = gradientString ? gradientString : "none";
+    previewWindow.style.backgroundImage = gradientString;
 }
 
 function setWindowButtonClickable(clickable) {
     if (clickable) {
-        previewWindowButtonContainer.classList.remove("unclickable")
+        previewWindowButtonContainer.classList.remove("unclickable");
     } else {
-        previewWindowButtonContainer.classList.add("unclickable")
+        previewWindowButtonContainer.classList.add("unclickable");  
     }
 }
 
@@ -788,12 +813,14 @@ colorButton.addEventListener("click", () => colorInput.click());
 colorInput.addEventListener("input", handleColorChange);
 
 // Listen for changes in opacity
-opacityInput.addEventListener("input", handleOpacityChange)
+opacityInput.addEventListener("input", handleOpacityChange);
 
 hideButton.addEventListener("click", handleHideColorbar);
 
-showCurrentButton.addEventListener("click", handleShowCurrentLayer)
-showAllButton.addEventListener("click", handleShowAllLayers)
+showCurrentButton.addEventListener("click", handleShowCurrentLayer);
+showAllButton.addEventListener("click", handleShowAllLayers);
+
+copyTotalCSSButton.addEventListener("click", handleCopyFullCSS);
 
 const layerObjects = {};
 addLayerButton.click();

@@ -92,8 +92,7 @@ main {
     font-weight: 600;
     font-size: 1.3em;
     vertical-align: middle;
-    /*border-bottom: 2px solid var(--panel-accent);*/
-    /*border-radius: 0 0 15px 15px;*/
+    cursor: default;
 }
 
 #layer-list {
@@ -323,11 +322,24 @@ main {
     transform: scale(1.01);
 }
 
-#layer-choice-container {
+.panel-button-container {
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
     width: 80%;
+}
+
+#layer-button {
+    border-radius: 15px 0 0 15px;
+    border-right: 0;
+    flex: 5
+}
+
+#random-layer-button {
+    border-radius: 0 15px 15px 0;
+    border-left: 0;
+    flex: 1;
+    border-left: 1px solid var(--panel-accent);
 }
 
 #current-layer-button {
@@ -343,6 +355,7 @@ main {
 .layer-preview-choice {
     color: var(--panel-text-color);
     background-color: #58B09C;
+    cursor: default;
 }
 
 .layer-preview-choice:hover {

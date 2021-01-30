@@ -34,12 +34,16 @@
 
             </div>
             <div id="panel-buttons">
-                <button id="layer-button" class="panel-button">Add layer</button>
-                <div id="layer-choice-container">
+                <div id="add-layer-container" class="panel-button-container">
+                    <button id="layer-button" class="panel-button" title="Add new layer">Add layer</button>
+                    <button id="random-layer-button" class="panel-button" title="Add new layer with random colors"></button>
+                </div>
+                
+                <div id="layer-choice-container" class="panel-button-container">
                     <button id="current-layer-button" class="panel-button">Show current layer</button>
                     <button id="all-layers-button" class="panel-button">Show all layers</button>
                 </div>
-                <button class="panel-button">Copy combined CSS</button>
+                <button id="copy-combined-css" class="panel-button">Copy combined CSS</button>
             </div>
         </div>
     </main>
