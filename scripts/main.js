@@ -19,6 +19,8 @@ const hideButton = document.querySelector("#hide-colorbar");
 const layerList = document.querySelector("#layer-list");
 const addLayerButton = document.querySelector("#layer-button");
 const previewWindowButtonContainer = document.querySelector("#preview-button-container");
+const showCurrentButton = document.querySelector("#current-layer-button");
+const showAllButton = document.querySelector("#all-layers-button");
 
 
 opacityInput.value = "100";
@@ -564,7 +566,6 @@ function handleHideColorbar() {
 }
 
 function handleStartColorMouseDown() {
-    console.log("mousedown");
     handleColorClick.call(this);
     updatePreviewWindow();
     const layerObject = layerObjects[this.getAttribute("layer-id")];
@@ -585,8 +586,8 @@ function handleStartColorMove(e, layerObject) {
 }
 
 function handleEndColorMouseDown() {
-    updatePreviewWindow();
     handleColorClick.call(this);
+    updatePreviewWindow();
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleEndColorMove(event, layerObject);
@@ -638,12 +639,13 @@ function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
 }
 
 function handleColorClick() {
-    console.log("click");
     const layerId = this.getAttribute("layer-id");
     const colorId = this.getAttribute("color-id");
     currentColorId = colorId;
-    const correspondingLayerContainer = layerList.querySelector(`[layer-id="${layerId}"]`);
-    setCurrentLayer(correspondingLayerContainer);
+    if (layerId !== currentLayerId) {
+        const correspondingLayerContainer = layerList.querySelector(`[layer-id="${layerId}"]`);
+        setCurrentLayer(correspondingLayerContainer);
+    }
     currentColor = this.getAttribute("fill");
     const colorWithOpacity = stripColorOpacity(currentColor);
     colorButton.style.backgroundColor = colorWithOpacity;
@@ -730,6 +732,24 @@ function handleAddLayer() {
     setCurrentLayer(layerList.childNodes[0]);
 }
 
+function handleShowCurrentLayer() {
+    showAllLayers = false;
+    showCurrentButton.classList.add("layer-preview-choice");
+    showAllButton.classList.remove("layer-preview-choice");
+    updatePreviewWindow();
+}
+
+function handleShowAllLayers() {
+    showAllLayers = true;
+    showAllButton.classList.add("layer-preview-choice");
+    showCurrentButton.classList.remove("layer-preview-choice");
+    updatePreviewWindow();
+}
+
+function handleCopyLayerCSS() {
+
+}
+
 function updatePreviewWindow() {
     if (!Object.keys(layerObjects).length) return;
     let gradientStringArray = [];
@@ -750,7 +770,6 @@ function updatePreviewWindow() {
     }
     let combinedGradientString = gradientStringArray.join(", ");
     combinedGradientString = combinedGradientString ? combinedGradientString : "none";
-    /*console.log(combinedGradientString);*/
     previewWindow.style.backgroundImage = combinedGradientString;
 }
 
@@ -773,5 +792,9 @@ opacityInput.addEventListener("input", handleOpacityChange)
 
 hideButton.addEventListener("click", handleHideColorbar);
 
+showCurrentButton.addEventListener("click", handleShowCurrentLayer)
+showAllButton.addEventListener("click", handleShowAllLayers)
+
 const layerObjects = {};
 addLayerButton.click();
+showCurrentButton.click();

@@ -323,6 +323,33 @@ main {
     transform: scale(1.01);
 }
 
+#layer-choice-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 80%;
+}
+
+#current-layer-button {
+    border-radius: 15px 0 0 15px;
+    border-right: 0;
+}
+
+#all-layers-button {
+    border-radius: 0 15px 15px 0;
+    border-left: 0;
+}
+
+.layer-preview-choice {
+    color: var(--panel-text-color);
+    background-color: #58B09C;
+}
+
+.layer-preview-choice:hover {
+    box-shadow: none;
+    transform: none;
+}
+
 svg {
     width: 100%;
     height: 100%;
