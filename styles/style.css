@@ -195,7 +195,10 @@ main {
 
 .layer-opacity-container {
     position: relative;
+    height: 100%;
 }
+
+
 
 .layer-button:hover {
     background-color: #9d9d9d55;
@@ -230,19 +233,20 @@ main {
 
 
 .layer-opacity-input-container {
-    top: 25%;
+    display: flex;
+    top: 0%;
     position: absolute;
     background-color: white;
     padding: 6px 5px 6px 5px;
-    border-radius: 5px;
+    height: 100%;
+    box-sizing: border-box;
+    background-color: var(--panel-accent);
 }
 
 .layer-opacity-selector {
     margin: 0 auto;
     width: 100%;
 }
-
-
 
 #color-picker {
     display: flex;
@@ -262,6 +266,13 @@ main {
     justify-content: space-evenly;
     align-items: center;
     margin-top: 10px;
+}
+
+#remove-color-button {
+    font-size: 0.8em;
+    margin-left: 10px;
+    cursor: pointer;
+    color: #75e4ca;
 }
 
 #color-button {
@@ -332,14 +343,15 @@ main {
 #layer-button {
     border-radius: 15px 0 0 15px;
     border-right: 0;
-    flex: 5
+    flex: 6;
 }
 
 #random-layer-button {
     border-radius: 0 15px 15px 0;
     border-left: 0;
     flex: 1;
-    border-left: 1px solid var(--panel-accent);
+    border-left: 2px solid var(--panel-accent);
+    padding: 0;
 }
 
 #current-layer-button {

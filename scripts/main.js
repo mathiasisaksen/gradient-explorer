@@ -9,6 +9,7 @@ const COLORBAR_INITIAL_DIRECTION = 45;
 const COLORBAR_PADDING = 2;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
 const DEFAULT_NEW_COLOR = "#FFFFFF";
+const MAX_RANDOM_COLORS = 10;
 
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
@@ -22,6 +23,8 @@ const previewWindowButtonContainer = document.querySelector("#preview-button-con
 const showCurrentButton = document.querySelector("#current-layer-button");
 const showAllButton = document.querySelector("#all-layers-button");
 const copyTotalCSSButton = document.querySelector("#copy-combined-css");
+const removeColorButton = document.querySelector("#remove-color-button");
+const addRandomLayerButton = document.querySelector("#random-layer-button");
 
 opacityInput.value = "100";
 let numberOfLayers = 0;
@@ -80,6 +83,15 @@ function getColorOpacity(hexColor) {
 
 function getIndexOfElementInParent(element) {
     return([...element.parentNode.childNodes].indexOf(element));
+}
+
+function generateRandomColor() {
+    const red = Math.floor(256*Math.random()).toString(16).padStart(2, "0");;
+    const green = Math.floor(256*Math.random()).toString(16).padStart(2, "0");;
+    const blue = Math.floor(256*Math.random()).toString(16).padStart(2, "0");;
+    const opacity = Math.random();
+    const color = "#" + red + green +  blue;
+    return(setColorOpacity(color, opacity));
 }
 
 class Colorbar {
@@ -168,7 +180,7 @@ class Colorbar {
         structureContainer.append(line);
 
         // Extender which connects line to rotation button
-        const extender = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        /*const extender = document.createElementNS("http://www.w3.org/2000/svg", "line");
         this.setLineAttributes(extender, 1 / 3, "2, 2");
         
         extender.classList.add("svg-extender");
@@ -187,7 +199,7 @@ class Colorbar {
         rotationButton.setAttribute("layer-id", this.gradient.layerId);
         elements.rotationButton = rotationButton;
         rotationButton.classList.add("svg-rotation");
-        structureContainer.append(rotationButton);
+        structureContainer.append(rotationButton);*/
 
         colorbarElement.append(structureContainer);
 
@@ -263,13 +275,13 @@ class Colorbar {
         this.svgElements.line.setAttribute("x2", p.lineEndX);
         this.svgElements.line.setAttribute("y2", p.lineEndY);
 
-        this.svgElements.extender.setAttribute("x1", p.lineEndX);
+        /*this.svgElements.extender.setAttribute("x1", p.lineEndX);
         this.svgElements.extender.setAttribute("y1", p.lineEndY);
         this.svgElements.extender.setAttribute("x2", p.extenderEndX);
         this.svgElements.extender.setAttribute("y2", p.extenderEndY);
 
         this.svgElements.rotationButton.setAttribute("cx", p.rotationX);
-        this.svgElements.rotationButton.setAttribute("cy", p.rotationY);
+        this.svgElements.rotationButton.setAttribute("cy", p.rotationY);*/
         
         const colors = this.gradient.colors;
         for (const colorId in colors) {
@@ -394,6 +406,7 @@ class Layer {
         if (this.hiddenLayer && !this.hiddenColorbar) {
             this.hideColorbar()
         } else if (!this.hiddenLayer && !this.hiddenColorbar) {
+            if (this.layerId != currentLayerId) return;
             this.showColorbar();
         }
     }
@@ -409,7 +422,6 @@ class Layer {
 
     showColorbar() {
         this.gradient.colorbar.colorbarElement.classList.remove("hidden");
-        this.hiddenColorbar = false;
     }
 
     showColorbarManually() {
@@ -470,7 +482,7 @@ class Layer {
         const layerOpacityContainer = document.createElement("div");
         layerOpacityContainer.classList.add("layer-opacity-container");
 
-        const setOpacityButton = document.createElement("button");
+        /*const setOpacityButton = document.createElement("button");
         setOpacityButton.classList.add("layer-button", "opacity-button");
         setOpacityButton.textContent = "Set global opacity"
         setOpacityButton.setAttribute("title", "Sets the opacity of every color in the layer");
@@ -486,10 +498,11 @@ class Layer {
         layerOpacitySelector.setAttribute("min", "0");
         layerOpacitySelector.setAttribute("max", "1");
         layerOpacitySelector.setAttribute("step", "0.01");
+        layerOpacitySelector.setAttribute("title", "Sets the opacity of every color. Click anywhere outside to close.");
 
         layerOpacityInputContainer.append(layerOpacitySelector);
         layerOpacityContainer.append(layerOpacityInputContainer);
-        layerButtonContainer.append(layerOpacityContainer);
+        layerButtonContainer.append(layerOpacityContainer);*/
 
         const cssButton = document.createElement("button");
         cssButton.classList.add("layer-button", "layer-css-button");
@@ -535,6 +548,8 @@ function setCurrentLayer(layerContainer) {
     const oldCurrentLayer = layerList.querySelector(".current-layer");
     if (oldCurrentLayer) {
         oldCurrentLayer.classList.remove("current-layer");
+        const oldId = oldCurrentLayer.getAttribute("layer-id");
+        layerObjects[oldId].hideColorbar();
     }
     layerContainer.classList.add("current-layer");
     currentLayerContainer = layerContainer;
@@ -545,6 +560,10 @@ function setCurrentLayer(layerContainer) {
             "Show colorbar" : "Hide colorbar";
     }
     layerObjects[currentLayerId].focusColorSelector();
+    if (!layerObjects[currentLayerId].hiddenColorbar) {
+
+    layerObjects[currentLayerId].showColorbar();
+    }
     updatePreviewWindow();
 }
 
@@ -732,6 +751,25 @@ function handleAddLayer() {
     setCurrentLayer(layerList.childNodes[0]);
 }
 
+function handleAddRandomLayer() {
+    handleAddLayer();
+    const numColors = 2 + Math.floor((MAX_RANDOM_COLORS - 1)*Math.random());
+    let randomColors = [];
+    let randomPositions = [];
+    for (let i = 0; i < numColors; i++) {
+        randomColors.push(generateRandomColor());
+        randomPositions.push(10 + 81*Math.random());
+    }
+    layerObjects[currentLayerId].gradient.updateColor(randomColors[0], 0);
+    layerObjects[currentLayerId].gradient.updateColor(randomColors[1], 1);
+
+    for (let i = 2; i < numColors; i++) {
+        layerObjects[currentLayerId].gradient.addColor(randomColors[i], i);
+        layerObjects[currentLayerId].gradient.updateColorPosition(randomPositions[i], i);
+    }
+    updatePreviewWindow();
+}
+
 function handleShowCurrentLayer() {
     showAllLayers = false;
     showCurrentButton.classList.add("layer-preview-choice");
@@ -756,6 +794,12 @@ function handleCopyFullCSS() {
     let gradientString = getFullGradientString();
     gradientString = gradientString ? gradientString : "none";
     navigator.clipboard.writeText(gradientString);
+}
+
+function handleRemoveColor() {
+    if (!currentLayerId || !currentColorId) return;
+    layerObjects[currentLayerId].gradient.removeColor(currentColorId);
+    updatePreviewWindow();
 }
 
 function getCurrentGradientString() {
@@ -807,6 +851,7 @@ function setWindowButtonClickable(clickable) {
 }
 
 addLayerButton.addEventListener("click", handleAddLayer);
+addRandomLayerButton.addEventListener("click", handleAddRandomLayer);
 // Listen for clicks on color circle, trigger color input
 colorButton.addEventListener("click", () => colorInput.click());
 // Update after giving input
@@ -821,6 +866,9 @@ showCurrentButton.addEventListener("click", handleShowCurrentLayer);
 showAllButton.addEventListener("click", handleShowAllLayers);
 
 copyTotalCSSButton.addEventListener("click", handleCopyFullCSS);
+
+removeColorButton.addEventListener("click", handleRemoveColor);
+
 
 const layerObjects = {};
 addLayerButton.click();
