@@ -309,7 +309,6 @@ class Colorbar {
         this.svgElements.colors[this.endColorId].addEventListener("mousedown", handleEndColorMouseDown);
         this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);
         this.svgElements.line.addEventListener("click", handleColorbarClick);
-        handleColorClick.call(this.svgElements.colors[this.endColorId]);
     }
 }
 
@@ -426,6 +425,12 @@ class Layer {
         this.gradient.updateGradient();
     }
 
+    focusColorSelector() {
+        console.log(this);
+        const colorbar = this.gradient.colorbar;
+        /*handleColorClick.call(colorbar.svgElements.colors[colorbar.endColorId]);*/
+    }
+
     setupLayerHTML() {
         const layerContainer = document.createElement("div");
         layerContainer.classList.add("layer-container");
@@ -520,7 +525,6 @@ class Layer {
 function setCurrentLayer(layerContainer) {
     const oldCurrentLayer = layerList.querySelector(".current-layer");
     if (oldCurrentLayer) {
-        const oldLayerId = currentLayerId;
         oldCurrentLayer.classList.remove("current-layer");
     }
     layerContainer.classList.add("current-layer");
@@ -529,13 +533,15 @@ function setCurrentLayer(layerContainer) {
     setWindowButtonClickable(!currentLayerContainer.classList.contains("hidden-layer"));
     if (layerObjects[currentLayerId]) {
         hideButton.textContent = layerObjects[currentLayerId].hiddenColorbar ? 
-        "Show colorbar" : "Hide colorbar";
+            "Show colorbar" : "Hide colorbar";
     }
-    /*updatePreviewWindow();*/
+    layerObjects[currentLayerId].focusColorSelector();
+    updatePreviewWindow();
 }
 
 function handleHideColorbar() {
-    if (currentLayerContainer && !currentLayerContainer.classList.contains("hidden-layer")) {
+    if (!currentLayerContainer) return; 
+    if (!currentLayerContainer.classList.contains("hidden-layer")) {
         const layerObject = layerObjects[currentLayerId];
         if (layerObject.hiddenColorbar) {
             layerObject.showColorbarManually();
@@ -548,6 +554,8 @@ function handleHideColorbar() {
 }
 
 function handleStartColorMouseDown() {
+    console.log("mousedown");
+    updatePreviewWindow();
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleStartColorMove(event, layerObject);
@@ -556,7 +564,6 @@ function handleStartColorMouseDown() {
     const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
     previewWindow.addEventListener("mouseup", eventRemove);
     previewWindow.addEventListener("mouseleave", eventRemove);
-    // updatePreviewWindow();
 }
 
 function handleStartColorMove(e, layerObject) {
@@ -567,6 +574,7 @@ function handleStartColorMove(e, layerObject) {
 }
 
 function handleEndColorMouseDown() {
+    updatePreviewWindow();
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleEndColorMove(event, layerObject);
@@ -579,7 +587,6 @@ function handleEndColorMouseDown() {
 
 function handleEndColorMove(e, layerObject) {
     layerObject.gradient.colorbar.updateLineEnd(e.x, e.y);
-    console.log(e.x);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
     updatePreviewWindow();
@@ -619,6 +626,7 @@ function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
 }
 
 function handleColorClick() {
+    console.log("click");
     const layerId = this.getAttribute("layer-id");
     const colorId = this.getAttribute("color-id");
     currentColorId = colorId;
@@ -629,7 +637,6 @@ function handleColorClick() {
     colorButton.style.backgroundColor = colorWithOpacity;
     colorInput.value = colorWithOpacity;
     opacityInput.value = getColorOpacity(currentColor);
-    updatePreviewWindow();
 }
 
 function handleColorChange() {
@@ -638,7 +645,7 @@ function handleColorChange() {
     if (currentGradient) {
         currentGradient.updateColor(this.value, currentColorId);   
     }
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleOpacityChange() {
@@ -649,7 +656,7 @@ function handleOpacityChange() {
     if (currentGradient) {
         currentGradient.updateColor(colorWithOpacity, currentColorId);
     }
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleMoveLayerUp() {
@@ -657,14 +664,14 @@ function handleMoveLayerUp() {
     const oldIndex = getIndexOfElementInParent(layerContainer);
     if (!layerContainer.previousSibling) return;
     layerList.insertBefore(layerContainer, layerContainer.previousSibling);
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleMoveLayerDown() {
     const layerContainer = this.closest(".layer-container");
     if (!layerContainer.nextSibling) return;
     layerList.insertBefore(layerContainer, layerContainer.nextSibling.nextSibling);
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleRemoveLayer() {
@@ -692,7 +699,6 @@ function handleRemoveLayer() {
 function handleTitleClick() {
     const layerContainer = this.closest(".layer-container");
     setCurrentLayer(layerContainer);
-    // updatePreviewWindow();
 }
 
 function handleLayerHide() {
@@ -701,19 +707,20 @@ function handleLayerHide() {
     if (layerId === currentLayerId) {
         setWindowButtonClickable(!layerObjects[layerId].hiddenLayer);
     }
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleAddLayer() {
     const onlyLayer = Object.keys(layerObjects).length === 0;
     const newLayer = new Layer(numberOfLayers++);
+    newLayer.update();
     layerObjects[newLayer.layerId] = newLayer;
     /*layerList.childNodes[0].classList.add("current-layer");*/
     setCurrentLayer(layerList.childNodes[0]);
-    // updatePreviewWindow();
 }
 
 function updatePreviewWindow() {
+    if (!Object.keys(layerObjects).length) return;
     let gradientStringArray = [];
     const layerArray = [...layerList.childNodes];
     if (showAllLayers && Object.keys(layerObjects).length > 1) {
@@ -737,7 +744,6 @@ function updatePreviewWindow() {
 }
 
 function setWindowButtonClickable(clickable) {
-    console.log(clickable)
     if (clickable) {
         previewWindowButtonContainer.classList.remove("unclickable")
     } else {
