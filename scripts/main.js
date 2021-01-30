@@ -20,6 +20,7 @@ const layerList = document.querySelector("#layer-list");
 const addLayerButton = document.querySelector("#layer-button");
 const previewWindowButtonContainer = document.querySelector("#preview-button-container");
 
+
 opacityInput.value = "100";
 let numberOfLayers = 0;
 let currentColorId = null;
@@ -305,9 +306,9 @@ class Colorbar {
         const colors = this.gradient.colors;
 
         this.svgElements.colors[this.startColorId].addEventListener("mousedown", handleStartColorMouseDown);
-        this.svgElements.colors[this.startColorId].addEventListener("click", handleColorClick);
+        /*this.svgElements.colors[this.startColorId].addEventListener("click", handleColorClick);*/
         this.svgElements.colors[this.endColorId].addEventListener("mousedown", handleEndColorMouseDown);
-        this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);
+        /*this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);*/
         this.svgElements.line.addEventListener("click", handleColorbarClick);
     }
 }
@@ -382,6 +383,7 @@ class Layer {
         this.layerContainer;
         this.hiddenColorbar = false; // True only when colorbar has been hidden with button
         this.hiddenLayer = false;
+        this.update();
     }
 
     toggleHidden() {
@@ -426,9 +428,17 @@ class Layer {
     }
 
     focusColorSelector() {
-        console.log(this);
         const colorbar = this.gradient.colorbar;
-        /*handleColorClick.call(colorbar.svgElements.colors[colorbar.endColorId]);*/
+        const colors = this.gradient.colors;
+        const layerId = this.layerId;
+        const colorId = colorbar.startColorId;
+        currentColorId = colorId;
+
+        const currentColor = colors[colorId].color;
+        const colorWithOpacity = stripColorOpacity(currentColor);
+        colorButton.style.backgroundColor = colorWithOpacity;
+        colorInput.value = colorWithOpacity;
+        opacityInput.value = getColorOpacity(currentColor);
     }
 
     setupLayerHTML() {
@@ -555,6 +565,7 @@ function handleHideColorbar() {
 
 function handleStartColorMouseDown() {
     console.log("mousedown");
+    handleColorClick.call(this);
     updatePreviewWindow();
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
@@ -575,6 +586,7 @@ function handleStartColorMove(e, layerObject) {
 
 function handleEndColorMouseDown() {
     updatePreviewWindow();
+    handleColorClick.call(this);
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     function currentHandler(event) {
         handleEndColorMove(event, layerObject);
@@ -713,7 +725,6 @@ function handleLayerHide() {
 function handleAddLayer() {
     const onlyLayer = Object.keys(layerObjects).length === 0;
     const newLayer = new Layer(numberOfLayers++);
-    newLayer.update();
     layerObjects[newLayer.layerId] = newLayer;
     /*layerList.childNodes[0].classList.add("current-layer");*/
     setCurrentLayer(layerList.childNodes[0]);
