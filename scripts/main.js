@@ -12,9 +12,9 @@ const DEFAULT_NEW_COLOR = "#FFFFFF";
 
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
-const opacityInput = document.querySelector("#opacity-selector input");
+const opacityInput = document.querySelector("#opacity-selector");
 const previewWindow = document.querySelector("#preview-window");
-const colorBarContainer = document.querySelector("#colorbar-container");
+const colorbarContainer = document.querySelector("#colorbar-container");
 const hideButton = document.querySelector("#hide-colorbar");
 const layerList = document.querySelector("#layer-list");
 const addLayerButton = document.querySelector("#layer-button");
@@ -148,9 +148,9 @@ class Colorbar {
 
     setupSVGStructure() {
         const elements = {};
-        const svgContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        svgContainer.classList.add("svg-colorbar-container");
-        svgContainer.setAttribute("layer-id", this.gradient.layerId);
+        const colorbarElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        colorbarElement.classList.add("svg-colorbar-container");
+        colorbarElement.setAttribute("layer-id", this.gradient.layerId);
         
         // Contains the main part of the colorbar, except the color circles
         const structureContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -186,7 +186,7 @@ class Colorbar {
         rotationButton.classList.add("svg-rotation");
         structureContainer.append(rotationButton);
 
-        svgContainer.append(structureContainer);
+        colorbarElement.append(structureContainer);
 
         // Contains the color circles
         const colorContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -200,12 +200,12 @@ class Colorbar {
             elements.colors[colorId] = colorElement;
             colorContainer.append(colorElement);
         }
-        svgContainer.append(colorContainer);
+        colorbarElement.append(colorContainer);
         
-        colorBarContainer.append(svgContainer);
+        colorbarContainer.append(colorbarElement);
 
         this.colorContainer = colorContainer;
-        this.svgContainer = svgContainer;
+        this.colorbarElement = colorbarElement;
         this.svgElements = elements;
     }
 
@@ -353,15 +353,7 @@ class Gradient {
     }
 
     updateColor(color, colorId) {
-        for (const layerId in layerObjects) {
-            console.log(layerId);
-            console.table(layerObjects[layerId].gradient.colors);
-        }
         this.colors[colorId].color = color;
-        for (const layerId in layerObjects) {
-            console.log(layerId);
-            console.table(layerObjects[layerId].gradient.colors);
-        }
         this.colorbar.updateColor(color, colorId);
         this.updateGradient();
     }
@@ -389,44 +381,44 @@ class Layer {
         this.setupLayerHTML();
         this.gradient = new Gradient(this.layerId, DEFAULT_COLORS);
         this.layerContainer;
-        this.visibleColorbar = true;
-        this.hidden = false;
+        this.hiddenColorbar = false; // True only when colorbar has been hidden with button
+        this.hiddenLayer = false;
     }
 
     toggleHidden() {
-        this.hidden = !this.hidden;
-        const colorbar = this.gradient.colorbar.svgContainer;
-        if (this.visibleColorbar && this.hidden) {
-            colorbar.classList.add("hidden");
-        } else if (this.visibleColorbar && !this.hidden && 
-                  (this.layerId === currentLayerId || showAllColorbars)) {
-            colorbar.classList.add("hidden");
-        } else {
-            colorbar.classList.remove("hidden");
+        this.hiddenLayer = !this.hiddenLayer;
+        this.layerContainer.classList.toggle("hidden-layer");
+        if (this.hiddenLayer && !this.hiddenColorbar) {
+            this.hideColorbar()
+        } else if (!this.hiddenLayer && !this.hiddenColorbar) {
+            this.showColorbar();
         }
+    }
+
+    hideColorbar() {
+        this.gradient.colorbar.colorbarElement.classList.add("hidden");
+    }
+
+    hideColorbarManually() {
+        this.hideColorbar();
+        this.hiddenColorbar = true;
+    }
+
+    showColorbar() {
+        this.gradient.colorbar.colorbarElement.classList.remove("hidden");
+        this.hiddenColorbar = false;
+    }
+
+    showColorbarManually() {
+        this.showColorbar();
+        this.hiddenColorbar = false;
     }
 
     get gradientString() {
-        if (this.hidden) {
+        if (this.hiddenLayer) {
             return("none");
         } else {
             return(this.gradient.gradientString);
-        }
-    }
-
-    toggleColorbar() {
-        const colorbar = this.gradient.colorbar.svgContainer;
-        colorbar.classList.toggle("hidden");
-        this.visibleColorbar = !colorbar.classList.contains("hidden");
-    }
-
-    setColorbarVisibility(isVisible) {
-        this.visibleColorbar = isVisible;
-        const colorbar = this.gradient.colorbar.svgContainer;
-        if (isVisible) {
-            colorbar.classList.remove("hidden");
-        } else {
-            colorbar.classList.add("hidden");
         }
     }
 
@@ -444,6 +436,7 @@ class Layer {
         const hideButton = document.createElement("div");
         hideButton.classList.add("hide-layer-button");
         hideButton.setAttribute("title", "Toggles the layers visibility");
+        hideButton.setAttribute("layer-id", this.layerId);
         hideButton.addEventListener("click", handleLayerHide);
 
         hideContainer.append(hideButton);
@@ -451,6 +444,7 @@ class Layer {
 
         const layerTitle = document.createElement("div");
         layerTitle.classList.add("layer-title")
+        layerTitle.setAttribute("layer-id", this.layerId);
         const layerText = document.createElement("p");
         layerText.innerText = `Layer ${this.layerId + 1}`;
         layerTitle.append(layerText);
@@ -467,6 +461,7 @@ class Layer {
         setOpacityButton.classList.add("layer-button", "opacity-button");
         setOpacityButton.textContent = "Set global opacity"
         setOpacityButton.setAttribute("title", "Sets the opacity of every color in the layer");
+        setOpacityButton.setAttribute("layer-id", this.layerId);
         layerOpacityContainer.append(setOpacityButton);
 
         const layerOpacityInputContainer = document.createElement("div");
@@ -533,19 +528,22 @@ function setCurrentLayer(layerContainer) {
     currentLayerId = currentLayerContainer.getAttribute("layer-id");
     setWindowButtonClickable(!currentLayerContainer.classList.contains("hidden-layer"));
     if (layerObjects[currentLayerId]) {
-        hideButton.textContent = layerObjects[currentLayerId].visibleColorbar ? 
-            "Hide colorbar" : "Show colorbar";
+        hideButton.textContent = layerObjects[currentLayerId].hiddenColorbar ? 
+        "Show colorbar" : "Hide colorbar";
     }
     /*updatePreviewWindow();*/
 }
 
-function toggleColorbar() {
-    if (!currentLayerContainer.classList.contains("hidden-layer")) {
-        layerObjects[currentLayerId].toggleColorbar();
-        /*const colorbar = document.querySelector(`.svg-colorbar-container[layer-id="${currentLayerId}"]`);
-        colorbar.classList.toggle("hidden");*/
-        hideButton.textContent = layerObjects[currentLayerId].visibleColorbar ? 
-            "Hide colorbar" : "Show colorbar";
+function handleHideColorbar() {
+    if (currentLayerContainer && !currentLayerContainer.classList.contains("hidden-layer")) {
+        const layerObject = layerObjects[currentLayerId];
+        if (layerObject.hiddenColorbar) {
+            layerObject.showColorbarManually();
+            hideButton.textContent = "Hide colorbar";
+        } else {
+            layerObject.hideColorbarManually();
+            hideButton.textContent = "Show colorbar";
+        }
     }
 }
 
@@ -562,10 +560,10 @@ function handleStartColorMouseDown() {
 }
 
 function handleStartColorMove(e, layerObject) {
-    layerObject.gradient.colorbar.updateLineStart(e.offsetX, e.offsetY);
+    layerObject.gradient.colorbar.updateLineStart(e.x, e.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleEndColorMouseDown() {
@@ -580,7 +578,8 @@ function handleEndColorMouseDown() {
 }
 
 function handleEndColorMove(e, layerObject) {
-    layerObject.gradient.colorbar.updateLineEnd(e.offsetX, e.offsetY);
+    layerObject.gradient.colorbar.updateLineEnd(e.x, e.y);
+    console.log(e.x);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
     updatePreviewWindow();
@@ -590,10 +589,10 @@ function handleColorbarClick(e) {
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
-    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const clickPosition = {x: e.x, y: e.y};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.addColor(DEFAULT_NEW_COLOR, colorPosition);
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleColorMouseDown() {
@@ -608,15 +607,15 @@ function handleColorMouseDown() {
     const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
     previewWindow.addEventListener("mouseup", eventRemove);
     previewWindow.addEventListener("mouseleave", eventRemove);
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
-    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const clickPosition = {x: e.x, y: e.y};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.updateColorPosition(colorPosition, colorId);
     layerObject.update();
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleColorClick() {
@@ -630,7 +629,7 @@ function handleColorClick() {
     colorButton.style.backgroundColor = colorWithOpacity;
     colorInput.value = colorWithOpacity;
     opacityInput.value = getColorOpacity(currentColor);
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleColorChange() {
@@ -678,7 +677,10 @@ function handleRemoveLayer() {
     if (isCurrent && nextCurrentLayer) {
         nextCurrentLayer.classList.add("current-layer");
         setCurrentLayer(nextCurrentLayer);
-    } 
+    }  else {
+        currentLayerContainer = null;
+        currentLayerId = null;
+    }
     if (!layerList.hasChildNodes()) {
         setWindowButtonClickable(false);
     }
@@ -694,13 +696,10 @@ function handleTitleClick() {
 }
 
 function handleLayerHide() {
-    const layerContainer = this.closest(".layer-container");
-    const layerId = layerContainer.getAttribute("layer-id");
-    layerContainer.classList.toggle("hidden-layer");
+    const layerId = this.getAttribute("layer-id");
     layerObjects[layerId].toggleHidden();
-    /*layerObjects[layerId].toggleColorbar();*/
     if (layerId === currentLayerId) {
-        setWindowButtonClickable(layerObjects[layerId].visibleColorbar);
+        setWindowButtonClickable(!layerObjects[layerId].hiddenLayer);
     }
     // updatePreviewWindow();
 }
@@ -709,10 +708,8 @@ function handleAddLayer() {
     const onlyLayer = Object.keys(layerObjects).length === 0;
     const newLayer = new Layer(numberOfLayers++);
     layerObjects[newLayer.layerId] = newLayer;
-    if (onlyLayer) {
-        layerList.childNodes[0].classList.add("current-layer");
-        setCurrentLayer(layerList.childNodes[0]);
-    }
+    /*layerList.childNodes[0].classList.add("current-layer");*/
+    setCurrentLayer(layerList.childNodes[0]);
     // updatePreviewWindow();
 }
 
@@ -740,6 +737,7 @@ function updatePreviewWindow() {
 }
 
 function setWindowButtonClickable(clickable) {
+    console.log(clickable)
     if (clickable) {
         previewWindowButtonContainer.classList.remove("unclickable")
     } else {
@@ -756,7 +754,7 @@ colorInput.addEventListener("input", handleColorChange);
 // Listen for changes in opacity
 opacityInput.addEventListener("input", handleOpacityChange)
 
-hideButton.addEventListener("click", toggleColorbar);
+hideButton.addEventListener("click", handleHideColorbar);
 
 const layerObjects = {};
 addLayerButton.click();
