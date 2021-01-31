@@ -143,7 +143,7 @@ class Colorbar {
         this.svgElements.colors[colorId] = colorElement;
         this.updateSVGPositions();
 
-        colorElement.addEventListener("mousedown", handleColorMouseDown);
+        colorElement.addEventListener("pointerdown", handleColorMouseDown);
         colorElement.addEventListener("click", handleColorClick);
         handleColorClick.call(colorElement);
     }
@@ -319,10 +319,10 @@ class Colorbar {
     addInitialListeners() {
         const colors = this.gradient.colors;
 
-        this.svgElements.colors[this.startColorId].addEventListener("mousedown", handleStartColorMouseDown);
-        /*this.svgElements.colors[this.startColorId].addEventListener("click", handleColorClick);*/
-        this.svgElements.colors[this.endColorId].addEventListener("mousedown", handleEndColorMouseDown);
-        /*this.svgElements.colors[this.endColorId].addEventListener("click", handleColorClick);*/
+        this.svgElements.colors[this.startColorId].addEventListener("pointerdown", 
+            handleStartColorMouseDown);
+        this.svgElements.colors[this.endColorId].addEventListener("pointerdown", 
+            handleEndColorMouseDown);
         this.svgElements.line.addEventListener("click", handleColorbarClick);
     }
 }
@@ -581,6 +581,12 @@ function handleHideColorbar() {
     }
 }
 
+function getPreviewWindowPosition(e) {
+    const boundRect = previewWindow.getBoundingClientRect();
+    return({x: e.clientX - boundRect.x,
+            y: e.clientY - boundRect.y})
+}
+
 function handleStartColorMouseDown() {
     handleColorClick.call(this);
     updatePreviewWindow();
@@ -588,14 +594,15 @@ function handleStartColorMouseDown() {
     function currentHandler(event) {
         handleStartColorMove(event, layerObject);
     } 
-    previewWindow.addEventListener("mousemove", currentHandler);
-    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
-    previewWindow.addEventListener("mouseup", eventRemove);
-    previewWindow.addEventListener("mouseleave", eventRemove);
+    previewWindow.addEventListener("pointermove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("pointermove", currentHandler);
+    previewWindow.addEventListener("pointerup", eventRemove);
+    previewWindow.addEventListener("pointerleave", eventRemove);
 }
 
 function handleStartColorMove(e, layerObject) {
-    layerObject.gradient.colorbar.updateLineStart(e.x, e.y);
+    const position = getPreviewWindowPosition(e);
+    layerObject.gradient.colorbar.updateLineStart(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
     updatePreviewWindow();
@@ -608,14 +615,15 @@ function handleEndColorMouseDown() {
     function currentHandler(event) {
         handleEndColorMove(event, layerObject);
     } 
-    previewWindow.addEventListener("mousemove", currentHandler);
-    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
-    previewWindow.addEventListener("mouseup", eventRemove);
-    previewWindow.addEventListener("mouseleave", eventRemove);
+    previewWindow.addEventListener("pointermove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("pointermove", currentHandler);
+    previewWindow.addEventListener("pointerup", eventRemove);
+    previewWindow.addEventListener("pointerleave", eventRemove);
 }
 
 function handleEndColorMove(e, layerObject) {
-    layerObject.gradient.colorbar.updateLineEnd(e.x, e.y);
+    const position = getPreviewWindowPosition(e);
+    layerObject.gradient.colorbar.updateLineEnd(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
     updatePreviewWindow();
@@ -625,7 +633,7 @@ function handleColorbarClick(e) {
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
-    const clickPosition = {x: e.x, y: e.y};
+    const clickPosition = {x: e.offsetX, y: e.offsetY};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.addColor(DEFAULT_NEW_COLOR, colorPosition);
     updatePreviewWindow();
@@ -639,15 +647,16 @@ function handleColorMouseDown() {
     function currentHandler(event) {
         handleColorMove(event, lineStart, lineEnd, colorId, layerObject);
     } 
-    previewWindow.addEventListener("mousemove", currentHandler);
-    const eventRemove = () => previewWindow.removeEventListener("mousemove", currentHandler);
-    previewWindow.addEventListener("mouseup", eventRemove);
-    previewWindow.addEventListener("mouseleave", eventRemove);
+    previewWindow.addEventListener("pointermove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("pointermove", currentHandler);
+    previewWindow.addEventListener("pointerup", eventRemove);
+    previewWindow.addEventListener("pointerleave", eventRemove);
     updatePreviewWindow();
 }
 
 function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
-    const clickPosition = {x: e.x, y: e.y};
+    console.log(e.target);
+    const clickPosition = {x: e.offsetX, y: e.offsetY};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.updateColorPosition(colorPosition, colorId);
     layerObject.update();

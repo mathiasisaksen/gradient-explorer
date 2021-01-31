@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gradient Explorer</title>
     <link rel="stylesheet" href="styles/style.css">
 </head>
@@ -10,6 +10,7 @@
 
     <main>
         <div id="preview-window">
+            <button id="menu-button"><p>≡</p></button>
             <svg id="colorbar-container"></svg>
             <div id="preview-button-container">
                 <button id="hide-colorbar" title="Toggles the colorbar of the current layer">Hide colorbar</button>
@@ -35,7 +36,7 @@
             <div id="panel-buttons">
                 <div id="add-layer-container" class="panel-button-container">
                     <button id="layer-button" class="panel-button" title="Add new layer">Add layer</button>
-                    <div id="random-layer-button" class="panel-button" title="Add new layer with random colors">
+                    <button id="random-layer-button" class="panel-button" title="Add new layer with random colors">
                     <svg width="100%" viewBox="0 0 800 600">
                         <g id="svg_38">
                             <line id="svg_10" y2="278.5" x2="410.5" y1="119.5" x1="206.5" stroke-width="7.5" stroke="#000000" fill="none"/>
@@ -63,7 +64,7 @@
                             <ellipse transform="rotate(-77 538.5,178.5) " ry="30" rx="21" id="svg_37" cy="178.5" cx="538.5" stroke-opacity="0" stroke-width="7.5" stroke="#000000" fill="#000000"/>
                            </g>
                     </svg>
-                    </div>
+                </button>
                 </div>
                 
                 <div id="layer-choice-container" class="panel-button-container">

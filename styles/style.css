@@ -9,10 +9,17 @@ html, body {
     margin: 0;
     height: 100%;
     font-family: Arial, Helvetica, sans-serif;
+    overflow: hidden;
 }
 
 p {
     margin: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
 }
 
 main {
@@ -21,6 +28,8 @@ main {
     flex-direction: row;
     height: 100%;
     width: 100%;
+    max-width: 1200px;
+    
 }
 
 #preview-window {
@@ -41,8 +50,8 @@ main {
 #preview-button-container button {
     cursor: pointer;
     margin: 0 7px 0 7px;
-    width: 100px;
-    height: 50px;
+    width: 10em;
+    height: 5em;
     opacity: 0.2;
     border-radius: 15px;
     outline: none;
@@ -66,6 +75,23 @@ main {
 
 #preview-button-container.unclickable button:focus {
     border-style: outset;
+}
+
+#menu-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    display: none;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-weight: 1000;
+    background-color: #FAFAFA44; 
+    font-size: 2em;
+    outline: none;
+    border-radius: 5px;
+    border: 0;
 }
 
 #layer-panel {
@@ -390,4 +416,16 @@ svg line {
 
 svg circle {
     cursor: move;
+}
+
+@media (max-width: 600px) {
+    #layer-panel {
+        display: none;
+    }
+    #layer-panel {
+        width: 100%;
+    }
+    #menu-button {
+        display: inline;
+    }
 }
