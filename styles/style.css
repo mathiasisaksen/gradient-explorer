@@ -20,6 +20,7 @@ body {
     display: flex;
     justify-content: center;
     flex-direction: row;
+    background-color: var(--panel-text-color);
 }
 
 main {
@@ -29,7 +30,9 @@ main {
     height: 100%;
     width: 100%;
     max-width: 1200px;
-    
+    border: 2px solid black;
+    border-top: 0;
+    border-bottom: 0;
 }
 
 #preview-window {
@@ -78,6 +81,7 @@ main {
 }
 
 #menu-button {
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -86,6 +90,7 @@ main {
     position: absolute;
     right: 15px;
     top: 15px;
+    width: 1.5em;
     font-weight: 1000;
     background-color: #FAFAFA44; 
     font-size: 2em;
@@ -105,14 +110,31 @@ main {
     height: 100%;
 }
 
-#panel-title {
-    width: 100%;
+#panel-title-container {
+    padding: 0.5em 0 0.5em 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 70px;
-    color: var(--panel-text-color);
     background-color: var(--panel-accent);
+    position: relative;
+    width: 100%;
+}
+
+#close-menu-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    right: 0.5em;
+    height: 100%;
+    top: 0;
+    cursor: pointer;
+    font-size: 2em;
+    color: var(--panel-text-color);
+}
+
+#panel-title {
+    color: var(--panel-text-color);
     text-transform: uppercase;
     text-align: center;
     font-weight: 600;
@@ -122,11 +144,11 @@ main {
 }
 
 #layer-list {
+    flex: 3;
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    border-bottom: 2px solid var(--panel-accent);
+    /*border-bottom: 2px solid var(--panel-accent);*/
     overflow-y: scroll;
 }
 
@@ -224,8 +246,6 @@ main {
     height: 100%;
 }
 
-
-
 .layer-button:hover {
     background-color: #9d9d9d55;
 }
@@ -281,6 +301,7 @@ main {
     width: 100%;
     background-color: var(--panel-accent);
     border-radius: 0 0 15px 15px;
+    border-top: 2px solid var(--panel-text-color);
     color: var(--panel-text-color);
     font-weight: 600;
     padding: 10px 0 10px 0;
@@ -331,6 +352,7 @@ main {
 }
 
 #panel-buttons {
+    /*flex: 1.5;*/
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -419,13 +441,38 @@ svg circle {
 }
 
 @media (max-width: 600px) {
-    #layer-panel {
-        display: none;
+    main {
+        border: none;
+    }
+    #preview-window {
+        border: none;
     }
     #layer-panel {
+        min-width: initial;
+        display: none;
         width: 100%;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
     }
     #menu-button {
         display: inline;
+    }
+}
+
+@media (min-width: 600px) {
+    #panel-title-container {
+        flex: 0;
+    }
+    #layer-list {
+        flex: 3;
+    }
+    #color-picker {
+        flex: 0;
+    }
+    #panel-buttons {
+        flex: 0;
     }
 }

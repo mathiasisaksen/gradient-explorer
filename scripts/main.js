@@ -25,6 +25,9 @@ const showAllButton = document.querySelector("#all-layers-button");
 const copyTotalCSSButton = document.querySelector("#copy-combined-css");
 const removeColorButton = document.querySelector("#remove-color-button");
 const addRandomLayerButton = document.querySelector("#random-layer-button");
+const showMenuButton = document.querySelector("#menu-button");
+const closeMenuButton = document.querySelector("#close-menu-button");
+const layerPanel = document.querySelector("#layer-panel");
 
 opacityInput.value = "100";
 let numberOfLayers = 0;
@@ -811,6 +814,14 @@ function handleRemoveColor() {
     updatePreviewWindow();
 }
 
+function handleShowMenu() {
+    layerPanel.style.display = "flex";
+}
+
+function handleCloseMenu() {
+    layerPanel.style.display = "none";
+}
+
 function getCurrentGradientString() {
     if (!Object.keys(layerObjects).length) return;
 
@@ -878,6 +889,8 @@ copyTotalCSSButton.addEventListener("click", handleCopyFullCSS);
 
 removeColorButton.addEventListener("click", handleRemoveColor);
 
+showMenuButton.addEventListener("click", handleShowMenu);
+closeMenuButton.addEventListener("click", handleCloseMenu);
 
 const layerObjects = {};
 addLayerButton.click();

@@ -10,14 +10,17 @@
 
     <main>
         <div id="preview-window">
-            <button id="menu-button"><p>≡</p></button>
+            <div id="menu-button"><p>≡</p></div>
             <svg id="colorbar-container"></svg>
             <div id="preview-button-container">
                 <button id="hide-colorbar" title="Toggles the colorbar of the current layer">Hide colorbar</button>
             </div>
         </div>
         <div id="layer-panel">
-            <div id="panel-title">Layers</div>
+            <div id="panel-title-container">
+                <div id="panel-title">Layers</div>
+                <div id="close-menu-button">×</div>
+            </div>
             <div id="layer-list"></div>
             <div id="color-picker">
                 <p>Color selector <span id="remove-color-button" title="Removes the selected color. Note: The colors on the start and the end of the colorbar cannot be removed.">[Remove color]</span></p>
