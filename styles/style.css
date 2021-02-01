@@ -111,7 +111,7 @@ main {
 }
 
 #panel-title-container {
-    padding: 0.5em 0 0.5em 0;
+    padding: 0.7em 0 0.7em 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -201,6 +201,7 @@ main {
 .layer-title {
     display: flex;
     align-items: center;
+    justify-content: center;
     color: var(--panel-text-color);
     font-weight: 600;
     flex: 1;
@@ -307,6 +308,11 @@ main {
     padding: 10px 0 10px 0;
 }
 
+#color-picker > p {
+    margin-top: 10px;
+    font-weight: 900;
+}
+
 #color-controls-container {
     display: flex;
     flex-direction: row;
@@ -348,7 +354,7 @@ main {
 }
 
 #opacity-container p {
-    margin: 3px 0 3px 0;
+    margin: 3px 0 10px 0;
 }
 
 #panel-buttons {

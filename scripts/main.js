@@ -10,7 +10,8 @@ const COLORBAR_PADDING = 2;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
 const DEFAULT_NEW_COLOR = "#FFFFFF";
 const MAX_RANDOM_COLORS = 10;
-const BACKGROUND_COLOR = "#FFFFFF"
+const BACKGROUND_COLOR = "#FFFFFF";
+const BASELINE_BODY_GRADIENT = "linear-gradient(0deg, #000000aa 0%, #000000aa 100%)";
 
 const body = document.querySelector("body");
 const colorButton = document.querySelector("#color-button");
@@ -39,6 +40,7 @@ let currentLayerId = null;
 let showAllLayers = false;
 let showAllColorbars = false;
 let currentLayerContainer;
+
 
 function interpolatePosition(startPoint, endPoint, weight) {
     const x = startPoint.x + 
@@ -488,33 +490,11 @@ class Layer {
         const layerOpacityContainer = document.createElement("div");
         layerOpacityContainer.classList.add("layer-opacity-container");
 
-        /*const setOpacityButton = document.createElement("button");
-        setOpacityButton.classList.add("layer-button", "opacity-button");
-        setOpacityButton.textContent = "Set global opacity"
-        setOpacityButton.setAttribute("title", "Sets the opacity of every color in the layer");
-        setOpacityButton.setAttribute("layer-id", this.layerId);
-        layerOpacityContainer.append(setOpacityButton);
-
-        const layerOpacityInputContainer = document.createElement("div");
-        layerOpacityInputContainer.classList.add("layer-opacity-input-container", "hidden");
-        const layerOpacitySelector = document.createElement("input");
-        layerOpacitySelector.classList.add("layer-opacity-selector");
-        layerOpacitySelector.setAttribute("layer-id", this.layerId);
-        layerOpacitySelector.setAttribute("type", "range");
-        layerOpacitySelector.setAttribute("min", "0");
-        layerOpacitySelector.setAttribute("max", "1");
-        layerOpacitySelector.setAttribute("step", "0.01");
-        layerOpacitySelector.setAttribute("title", "Sets the opacity of every color. Click anywhere outside to close.");
-
-        layerOpacityInputContainer.append(layerOpacitySelector);
-        layerOpacityContainer.append(layerOpacityInputContainer);
-        layerButtonContainer.append(layerOpacityContainer);*/
-
         const cssButton = document.createElement("button");
         cssButton.classList.add("layer-button", "layer-css-button");
         cssButton.setAttribute("layer-id", this.layerId);
         cssButton.textContent = "Copy CSS";
-        cssButton.setAttribute("title", "Copies the CSS code of the layer's gradient");
+        cssButton.setAttribute("title", "Copies the CSS code of the layer's gradient to your clipbaord");
         cssButton.addEventListener("click", handleCopyLayerCSS);
         layerButtonContainer.append(cssButton);
 
@@ -862,7 +842,8 @@ function updatePreviewWindow() {
     }
     gradientString = gradientString ? gradientString : "none";
     previewWindow.style.backgroundImage = gradientString;
-    body.style.backgroundImage = gradientString;
+    body.style.backgroundImage = `${BASELINE_BODY_GRADIENT}, ${gradientString}`;
+    console.log(`${BASELINE_BODY_GRADIENT}, ${gradientString}`);
 }
 
 function setWindowButtonClickable(clickable) {
