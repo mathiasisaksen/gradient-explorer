@@ -40,7 +40,7 @@ main {
     border-right: 2px solid var(--panel-accent);
     height: 100%;
     flex-grow: 1;
-    background: linear-gradient(135deg, #ff95f3, #008080);
+    /*background: linear-gradient(135deg, #ff95f3, #008080);*/
 }
 
 #preview-button-container {
@@ -352,11 +352,10 @@ main {
 }
 
 #panel-buttons {
-    /*flex: 1.5;*/
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    width: 90%;
     padding-top: 10px;
     padding-bottom: 10px;
     background-color: var(--panel-background);
@@ -367,10 +366,10 @@ main {
     padding: 10px;
     outline: none;
     color: var(--panel-accent);
-    width: 80%;
     border: 2px solid var(--panel-accent);
     border-radius: 15px;
     cursor: pointer;
+    width: 100%;
     margin: 7px 0 7px 0;
     background-color: var(--panel-background);
     transition: box-shadow 0.3s ease-in-out;
@@ -385,7 +384,7 @@ main {
     display: flex;
     flex-direction: row;
     justify-content: space-evenly;
-    width: 80%;
+    width: 100%;
 }
 
 #layer-button {
@@ -460,9 +459,26 @@ svg circle {
     #menu-button {
         display: inline;
     }
+    .panel-button {
+        font-size: 0.8em;
+    }
 }
 
 @media (min-width: 600px) {
+    #layer-panel {
+        display: flex;
+    }
+
+    body {
+        background: linear-gradient(-45.92deg, #3b80b850 0%, #c2bf7452 16.20724414097277%, #afb28477 18.01221884646759%, #04070625 49.96507343157863%, #28b1998a 81.27210055649805%, #4a04c27c 100%), linear-gradient(135.00deg, #10f8c847 0%, #2a4e82e5 27.742999580479637%, #850165a5 53.48059253967965%, #bdbb9434 78.94882547638191%, #46f5024f 100%), linear-gradient(60.13deg, #e23899d6 0%, #64c534d1 15.79760722028991%, #2ede6a28 73.85257861951061%, #af1545c6 100%);
+    }
+
+    main {
+        border: 2px solid var(--panel-accent);
+        margin: 3em;
+        height: auto;
+    }
+
     #panel-title-container {
         flex: 0;
     }
@@ -474,5 +490,8 @@ svg circle {
     }
     #panel-buttons {
         flex: 0;
+    }
+    #close-menu-button {
+        display: none;
     }
 }

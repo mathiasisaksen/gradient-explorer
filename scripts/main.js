@@ -1,8 +1,8 @@
 
 const COLORBAR_LENGTH = 400;
-const COLORBAR_WIDTH = 7;
+const COLORBAR_WIDTH = 14;
 const COLORBAR_EXTENSION = 70;
-const COLORBAR_RADIUS = 10;
+const COLORBAR_RADIUS = 20;
 const COLORBAR_FILL = "#222222"
 const COLORBAR_CIRCLE_STROKE = 3;
 const COLORBAR_INITIAL_DIRECTION = 45;
@@ -10,7 +10,9 @@ const COLORBAR_PADDING = 2;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
 const DEFAULT_NEW_COLOR = "#FFFFFF";
 const MAX_RANDOM_COLORS = 10;
+const BACKGROUND_COLOR = "#FFFFFF"
 
+const body = document.querySelector("body");
 const colorButton = document.querySelector("#color-button");
 const colorInput = document.querySelector("#color-selector");
 const opacityInput = document.querySelector("#opacity-selector");
@@ -30,6 +32,7 @@ const closeMenuButton = document.querySelector("#close-menu-button");
 const layerPanel = document.querySelector("#layer-panel");
 
 opacityInput.value = "100";
+previewWindow.style.backgroundColor = BACKGROUND_COLOR;
 let numberOfLayers = 0;
 let currentColorId = null;
 let currentLayerId = null;
@@ -735,7 +738,7 @@ function handleRemoveLayer() {
     }
     const remainingElements = document.querySelectorAll(`[layer-id="${layerId}"]`);
     [...remainingElements].forEach(node => node.parentNode.removeChild(node));
-    // updatePreviewWindow();
+    updatePreviewWindow();
 }
 
 function handleTitleClick() {
@@ -823,7 +826,7 @@ function handleCloseMenu() {
 }
 
 function getCurrentGradientString() {
-    if (!Object.keys(layerObjects).length) return;
+    if (!Object.keys(layerObjects).length) return("");
 
     if (!layerObjects[currentLayerId].hiddenLayer) {
         return(layerObjects[currentLayerId].gradientString);
@@ -851,7 +854,6 @@ function getFullGradientString() {
 }
 
 function updatePreviewWindow() {
-    if (!Object.keys(layerObjects).length) return;
     let gradientString;
     if (showAllLayers) {
         gradientString = getFullGradientString();
@@ -860,6 +862,7 @@ function updatePreviewWindow() {
     }
     gradientString = gradientString ? gradientString : "none";
     previewWindow.style.backgroundImage = gradientString;
+    body.style.backgroundImage = gradientString;
 }
 
 function setWindowButtonClickable(clickable) {
