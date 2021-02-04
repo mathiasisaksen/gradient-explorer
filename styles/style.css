@@ -30,17 +30,14 @@ main {
     height: 100%;
     width: 100%;
     max-width: 1200px;
-    border: 2px solid black;
     border-top: 0;
     border-bottom: 0;
 }
 
 #preview-window {
     position: relative;
-    border-right: 2px solid var(--panel-accent);
     height: 100%;
     flex-grow: 1;
-    /*background: linear-gradient(135deg, #ff95f3, #008080);*/
 }
 
 #preview-button-container {
@@ -485,7 +482,6 @@ svg circle {
     }
 
     main {
-        border: 2px solid var(--panel-accent);
         margin: 3em;
         height: auto;
     }
