@@ -12,6 +12,10 @@ html, body {
     overflow: hidden;
 }
 
+* {
+    user-select: none;
+}
+
 p {
     margin: 0;
 }
@@ -148,6 +152,7 @@ main {
     flex-direction: column;
     width: 100%;
     overflow-y: scroll;
+    background-color: var(--panel-background);
 }
 
 #layer-list::-webkit-scrollbar {
@@ -352,7 +357,7 @@ main {
 
 #opacity-container {
     text-align: center;
-    font-size: 0.8em;
+    font-size: 0.9em;
 }
 
 #opacity-container p {
@@ -366,7 +371,7 @@ main {
     width: 90%;
     padding-top: 10px;
     padding-bottom: 10px;
-    background-color: var(--panel-background);
+    background-color: transparent;
 }
 
 .panel-button {
@@ -486,19 +491,44 @@ svg circle {
         height: auto;
     }
 
+    #preview-window {
+        margin-right:2em;
+        border-radius: 2em;
+    }
+
+    #colorbar-container {
+        border-radius: 2em;
+    }
+
+    #layer-panel {
+        border-radius: 2em;
+        background-color: transparent;
+        opacity: 1;
+    }
+
     #panel-title-container {
         flex: 0;
+        border-radius: 2em 2em 0 0;
     }
     #layer-list {
         flex: 3;
+        background-color: var(--panel-background);
     }
     #color-picker {
         flex: 0;
+        border-radius: 0 0 2em 2em;
     }
     #panel-buttons {
         flex: 0;
+        width: 100%;
+        padding-bottom: 0;
     }
     #close-menu-button {
         display: none;
     }
+
+    #panel-buttons > .panel-button:last-child {
+        margin-bottom: 0;
+    }
+
 }
