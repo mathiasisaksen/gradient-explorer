@@ -641,7 +641,6 @@ function handleColorMouseDown() {
 }
 
 function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
-    console.log(e.target);
     const clickPosition = {x: e.offsetX, y: e.offsetY};
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.updateColorPosition(colorPosition, colorId);
@@ -846,7 +845,6 @@ function updatePreviewWindow() {
     gradientString = gradientString ? gradientString : "none";
     previewWindow.style.backgroundImage = gradientString;
     body.style.backgroundImage = `${BASELINE_BODY_GRADIENT}, ${gradientString}`;
-    console.log(`${BASELINE_BODY_GRADIENT}, ${gradientString}`);
 }
 
 function setWindowButtonClickable(clickable) {
