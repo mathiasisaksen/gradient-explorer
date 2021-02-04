@@ -665,10 +665,13 @@ function handleColorClick() {
 }
 
 function handleColorChange() {
-    colorButton.style.backgroundColor = this.value;
+    const currentColor = this.value;
+    colorButton.style.backgroundColor = currentColor;
+    const currentOpacity = opacityInput.value;
+    const colorWithOpacity = setColorOpacity(currentColor, currentOpacity);
     const currentGradient = layerObjects[currentLayerId].gradient;
     if (currentGradient) {
-        currentGradient.updateColor(this.value, currentColorId);   
+        currentGradient.updateColor(colorWithOpacity, currentColorId);   
     }
     updatePreviewWindow();
 }
