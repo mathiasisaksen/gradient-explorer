@@ -3,7 +3,8 @@
     --panel-accent: rgb(34, 34, 34);
     --panel-text-color: #fcfcfc;
     --panel-layer-background: #222222;
-    --green-accent: #58B09C
+    --green-accent: #58B09C;
+    --info-background: rgba(34, 34, 34, 0.9);
 }
 
 html, body {
@@ -82,16 +83,21 @@ main {
     border-style: outset;
 }
 
-#menu-button {
+#menu-info-container {
+    display: flex;
+    flex-direction: column;
     cursor: pointer;
+    display: none;
+    position: absolute;
+    right: 1em;
+    top: 1em;
+}
+
+#menu-info-container div {
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    display: none;
-    position: absolute;
-    right: 15px;
-    top: 15px;
     width: 1.5em;
     font-weight: 1000;
     background-color: #FAFAFA44; 
@@ -99,6 +105,8 @@ main {
     outline: none;
     border-radius: 5px;
     border: 0;
+    margin: 0.2em;
+    z-index: 0;
 }
 
 #layer-panel {
@@ -436,9 +444,50 @@ main {
     transform: none;
 }
 
+#info-screen {
+    opacity: 1;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--info-background);
+}
+
+#info-screen * {
+    color: var(--panel-text-color);
+    opacity: 1;
+    margin: 1em;
+    font-size: 1em;
+    font-weight: 700;
+}
+
+#info-screen a {
+    text-decoration: none;
+    color: var(--green-accent);
+}
+
+
+#close-info-button {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    right: 0.5em;
+    top: 0.5em;
+    cursor: pointer;
+    font-size: 2em;
+    color: var(--panel-text-color);
+}
+
 svg {
     width: 100%;
     height: 100%;
+    z-index: 2
 }
 
 svg line {
@@ -451,6 +500,7 @@ svg line {
 
 svg circle {
     cursor: move;
+    z-index: 2;
 }
 
 @media (max-width: 600px) {
@@ -470,8 +520,8 @@ svg circle {
         right: 0;
         left: 0;
     }
-    #menu-button {
-        display: inline;
+    #menu-info-container {
+        display: flex;
     }
     .panel-button {
         font-size: 0.8em;

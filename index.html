@@ -9,7 +9,10 @@
 <body>
     <main>
         <div id="preview-window">
-            <div id="menu-button"><p>≡</p></div>
+            <div id="menu-info-container">
+                <div id="menu-button">≡</div>
+                <div id="info-button">?</div>
+            </div>
             <svg id="colorbar-container"></svg>
             <div id="preview-button-container">
                 <button id="hide-colorbar" title="Toggles the colorbar of the current layer">Hide colorbar</button>
@@ -75,6 +78,13 @@
                 </div>
                 <button id="copy-combined-css" class="panel-button" title="Copies the combined CSS of every visible layer">Copy combined CSS</button>
             </div>
+        </div>
+        <div id="info-screen" class="hidden">
+            <div id="close-info-button">×</div>
+            <p>Made by Mathias Isaksen</p>
+            <a href="https://github.com/mathiasisaksen/gradient-explorer" target="_blank">GitHub repo</a>
+            <a href="https://www.instagram.com/st4yhome/" target="_blank">Instagram</a>
+    </footer>
         </div>
     </main>
 

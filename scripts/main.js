@@ -31,6 +31,9 @@ const addRandomLayerButton = document.querySelector("#random-layer-button");
 const showMenuButton = document.querySelector("#menu-button");
 const closeMenuButton = document.querySelector("#close-menu-button");
 const layerPanel = document.querySelector("#layer-panel");
+const showInfoButton = document.querySelector("#info-button");
+const closeInfoButton = document.querySelector("#close-info-button");
+const infoScreen = document.querySelector("#info-screen");
 
 opacityInput.value = "100";
 previewWindow.style.backgroundColor = BACKGROUND_COLOR;
@@ -807,6 +810,14 @@ function handleCloseMenu() {
     layerPanel.style.display = "none";
 }
 
+function handleShowInfo() {
+    infoScreen.style.display = "flex";
+}
+
+function handleCloseInfo() {
+    infoScreen.style.display = "none";
+}
+
 function getCurrentGradientString() {
     if (!Object.keys(layerObjects).length) return("");
 
@@ -876,6 +887,9 @@ removeColorButton.addEventListener("click", handleRemoveColor);
 
 showMenuButton.addEventListener("click", handleShowMenu);
 closeMenuButton.addEventListener("click", handleCloseMenu);
+
+showInfoButton.addEventListener("click", handleShowInfo);
+closeInfoButton.addEventListener("click", handleCloseInfo);
 
 const layerObjects = {};
 addLayerButton.click();
