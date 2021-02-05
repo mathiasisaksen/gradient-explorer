@@ -3,6 +3,7 @@
     --panel-accent: rgb(34, 34, 34);
     --panel-text-color: #fcfcfc;
     --panel-layer-background: #222222;
+    --green-accent: #58B09C
 }
 
 html, body {
@@ -177,7 +178,7 @@ main {
 }
 
 .current-layer {
-    background-color: #58B09C;
+    background-color: var(--green-accent);
 }
 
 .hide-layer-container {
@@ -426,7 +427,7 @@ main {
 
 .layer-preview-choice {
     color: var(--panel-text-color);
-    background-color: #58B09C;
+    background-color: var(--green-accent);
     cursor: default;
 }
 
@@ -475,6 +476,10 @@ svg circle {
     .panel-button {
         font-size: 0.8em;
     }
+
+    footer {
+        display: none;
+    }
 }
 
 @media (min-width: 600px) {
@@ -483,12 +488,17 @@ svg circle {
     }
 
     body {
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: column;
         background: linear-gradient(-45.92deg, #3b80b850 0%, #c2bf7452 16.20724414097277%, #afb28477 18.01221884646759%, #04070625 49.96507343157863%, #28b1998a 81.27210055649805%, #4a04c27c 100%), linear-gradient(135.00deg, #10f8c847 0%, #2a4e82e5 27.742999580479637%, #850165a5 53.48059253967965%, #bdbb9434 78.94882547638191%, #46f5024f 100%), linear-gradient(60.13deg, #e23899d6 0%, #64c534d1 15.79760722028991%, #2ede6a28 73.85257861951061%, #af1545c6 100%);
     }
 
     main {
+        flex: 1;
         margin: 3em;
         height: auto;
+        box-sizing: content-box;
     }
 
     #preview-window {
@@ -529,6 +539,31 @@ svg circle {
 
     #panel-buttons > .panel-button:last-child {
         margin-bottom: 0;
+    }
+
+    .panel-button {
+        border: 0;
+    }
+
+    footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--panel-text-color);
+        width: 100%;
+        background-color: var(--panel-accent);
+        padding: 1em;
+    }
+
+    footer * {
+        margin: 0 1em 0 1em;
+        font-size: 1em;
+        font-weight: 700;
+    }
+
+    footer a {
+        text-decoration: none;
+        color: var(--green-accent);
     }
 
 }
