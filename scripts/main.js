@@ -1,5 +1,4 @@
 
-
 let COLORBAR_LENGTH;
 let COLORBAR_WIDTH;
 let COLORBAR_RADIUS;
@@ -16,7 +15,7 @@ const BASELINE_BODY_GRADIENT = "linear-gradient(0deg, #000000aa 0%, #000000aa 10
 function setSVGScale() {
     let responsiveScale;
     if (window.innerWidth < 600) {
-        responsiveScale = 4;
+        responsiveScale = 3;
         COLORBAR_LENGTH = 200;
     } else {
         responsiveScale = 1.5;
@@ -552,8 +551,6 @@ function handleHideColorbar() {
 
 function getRelativePosition(e) {
     const boundRect = previewWindow.getBoundingClientRect();
-    console.log(e);
-    //console.log(e.clientX - boundRect.width / 2, e.clientY - boundRect.height / 2);
     return({x: 100*(e.clientX - boundRect.x - boundRect.width / 2)/(boundRect.width / 2),
             y: 100*(e.clientY - boundRect.y - boundRect.height / 2)/(boundRect.width / 2)});
 }
