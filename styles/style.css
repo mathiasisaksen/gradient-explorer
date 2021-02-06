@@ -16,6 +16,7 @@ html, body {
 
 * {
     user-select: none;
+    -webkit-user-select: none;
 }
 
 p {
@@ -39,6 +40,24 @@ main {
     border-top: 0;
     border-bottom: 0;
 }
+
+svg {
+    width: 100%;
+    height: auto;
+}
+
+svg line {
+    cursor: crosshair;
+}
+
+.hidden {
+    display: none;
+}
+
+svg circle {
+    cursor: move;
+}
+
 
 #preview-window {
     position: relative;
@@ -106,7 +125,6 @@ main {
     border-radius: 5px;
     border: 0;
     margin: 0.2em;
-    z-index: 0;
 }
 
 #layer-panel {
@@ -156,7 +174,7 @@ main {
 }
 
 #layer-list {
-    flex: 3;
+    flex: 1;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -484,25 +502,6 @@ main {
     color: var(--panel-text-color);
 }
 
-svg {
-    width: 100%;
-    height: 100%;
-    z-index: 2
-}
-
-svg line {
-    cursor: crosshair;
-}
-
-.hidden {
-    display: none;
-}
-
-svg circle {
-    cursor: move;
-    z-index: 2;
-}
-
 @media (max-width: 600px) {
     main {
         border: none;
@@ -541,7 +540,6 @@ svg circle {
         justify-content: space-between;
         align-items: center;
         flex-direction: column;
-        background: linear-gradient(-45.92deg, #3b80b850 0%, #c2bf7452 16.20724414097277%, #afb28477 18.01221884646759%, #04070625 49.96507343157863%, #28b1998a 81.27210055649805%, #4a04c27c 100%), linear-gradient(135.00deg, #10f8c847 0%, #2a4e82e5 27.742999580479637%, #850165a5 53.48059253967965%, #bdbb9434 78.94882547638191%, #46f5024f 100%), linear-gradient(60.13deg, #e23899d6 0%, #64c534d1 15.79760722028991%, #2ede6a28 73.85257861951061%, #af1545c6 100%);
     }
 
     main {
@@ -567,19 +565,15 @@ svg circle {
     }
 
     #panel-title-container {
-        flex: 0;
         border-radius: 2em 2em 0 0;
     }
     #layer-list {
-        flex: 3;
         background-color: var(--panel-background);
     }
     #color-picker {
-        flex: 0;
         border-radius: 0 0 2em 2em;
     }
     #panel-buttons {
-        flex: 0;
         width: 100%;
         padding-bottom: 0;
     }
