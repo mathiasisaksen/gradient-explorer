@@ -1,4 +1,7 @@
 
+// Check if device supports touch
+const useTouch = "ontouchstart" in document.documentElement;
+
 let COLORBAR_LENGTH;
 let COLORBAR_WIDTH;
 let COLORBAR_RADIUS;
@@ -170,8 +173,12 @@ class Colorbar {
         colorContainer.append(colorElement);
         this.svgElements.colors[colorId] = colorElement;
         this.updateSVGPositions();
-
-        colorElement.addEventListener("pointerdown", handleColorMouseDown);
+        
+        if (useTouch) {
+            colorElement.addEventListener("touchstart", handleColorTouchDown);
+        } else {
+            colorElement.addEventListener("pointerdown", handleColorMouseDown);
+        }
         colorElement.addEventListener("click", handleColorClick);
         handleColorClick.call(colorElement);
     }
@@ -308,11 +315,17 @@ class Colorbar {
 
     addInitialListeners() {
         const colors = this.gradient.colors;
-
-        this.svgElements.colors[this.startColorId].addEventListener("pointerdown", 
-            handleStartColorMouseDown);
-        this.svgElements.colors[this.endColorId].addEventListener("pointerdown", 
-            handleEndColorMouseDown);
+        if (useTouch) {
+            this.svgElements.colors[this.startColorId].addEventListener("touchstart", 
+                handleStartColorTouchDown);
+            this.svgElements.colors[this.endColorId].addEventListener("touchstart", 
+                handleEndColorTouchDown);
+        } else {
+            this.svgElements.colors[this.startColorId].addEventListener("pointerdown", 
+                handleStartColorMouseDown);
+            this.svgElements.colors[this.endColorId].addEventListener("pointerdown", 
+                handleEndColorMouseDown);
+        }
         this.svgElements.line.addEventListener("click", handleColorbarClick);
     }
 }
@@ -549,10 +562,10 @@ function handleHideColorbar() {
     }
 }
 
-function getRelativePosition(e) {
+function getRelativePosition(x, y) {
     const boundRect = previewWindow.getBoundingClientRect();
-    return({x: 100*(e.clientX - boundRect.x - boundRect.width / 2)/(boundRect.width / 2),
-            y: 100*(e.clientY - boundRect.y - boundRect.height / 2)/(boundRect.width / 2)});
+    return({x: 100*(x - boundRect.x - boundRect.width / 2)/(boundRect.width / 2),
+            y: 100*(y - boundRect.y - boundRect.height / 2)/(boundRect.width / 2)});
 }
 
 function handleStartColorMouseDown() {
@@ -569,7 +582,28 @@ function handleStartColorMouseDown() {
 }
 
 function handleStartColorMove(e, layerObject) {
-    const position = getRelativePosition(e);
+    const position = getRelativePosition(e.clientX, e.clientY);
+    layerObject.gradient.colorbar.updateLineStart(position.x, position.y);
+    layerObject.gradient.colorbar.updateSVGPositions();
+    layerObject.update();
+    updatePreviewWindow();
+}
+
+function handleStartColorTouchDown() {
+    handleColorClick.call(this);
+    updatePreviewWindow();
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
+    function currentHandler(event) {
+        handleStartColorTouchMove(event, layerObject);
+    } 
+    previewWindow.addEventListener("touchmove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("touchmove", currentHandler);
+    previewWindow.addEventListener("touchend", eventRemove);
+}
+
+function handleStartColorTouchMove(e, layerObject) {
+    const position = getRelativePosition(e.changedTouches[0].clientX, 
+                                         e.changedTouches[0].clientY);
     layerObject.gradient.colorbar.updateLineStart(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
@@ -590,7 +624,28 @@ function handleEndColorMouseDown() {
 }
 
 function handleEndColorMove(e, layerObject) {
-    const position = getRelativePosition(e);
+    const position = getRelativePosition(e.clientX, e.clientY);
+    layerObject.gradient.colorbar.updateLineEnd(position.x, position.y);
+    layerObject.gradient.colorbar.updateSVGPositions();
+    layerObject.update();
+    updatePreviewWindow();
+}
+
+function handleEndColorTouchDown() {
+    handleColorClick.call(this);
+    updatePreviewWindow();
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
+    function currentHandler(event) {
+        handleEndColorTouchMove(event, layerObject);
+    } 
+    previewWindow.addEventListener("touchmove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("touchmove", currentHandler);
+    previewWindow.addEventListener("touchend", eventRemove);
+}
+
+function handleEndColorTouchMove(e, layerObject) {
+    const position = getRelativePosition(e.changedTouches[0].clientX, 
+                                         e.changedTouches[0].clientY);
     layerObject.gradient.colorbar.updateLineEnd(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
@@ -601,8 +656,8 @@ function handleColorbarClick(e) {
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
-    const clickPosition = getRelativePosition(e);
-    const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
+    const position = getRelativePosition(e.clientX, e.clientY);
+    const colorPosition = 100 * computeWeightOfNearestPointOnLine(position, lineStart, lineEnd);
     layerObject.gradient.addColor(DEFAULT_NEW_COLOR, colorPosition);
     updatePreviewWindow();
 }
@@ -623,8 +678,31 @@ function handleColorMouseDown() {
 }
 
 function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
-    const clickPosition = getRelativePosition(e);
-    const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
+    const position = getRelativePosition(e.clientX, e.clientY);
+    const colorPosition = 100 * computeWeightOfNearestPointOnLine(position, lineStart, lineEnd);
+    layerObject.gradient.updateColorPosition(colorPosition, colorId);
+    layerObject.update();
+    updatePreviewWindow();
+}
+
+function handleColorTouchDown() {
+    const layerObject = layerObjects[this.getAttribute("layer-id")];
+    const lineStart = layerObject.gradient.colorbar.getLineStart();
+    const lineEnd = layerObject.gradient.colorbar.getLineEnd();
+    const colorId = this.getAttribute("color-id");
+    function currentHandler(event) {
+        handleColorTouchMove(event, lineStart, lineEnd, colorId, layerObject);
+    } 
+    previewWindow.addEventListener("touchmove", currentHandler);
+    const eventRemove = () => previewWindow.removeEventListener("touchmove", currentHandler);
+    previewWindow.addEventListener("touchend", eventRemove);
+    updatePreviewWindow();
+}
+
+function handleColorTouchMove(e, lineStart, lineEnd, colorId, layerObject) {
+    const position = getRelativePosition(e.changedTouches[0].clientX, 
+                                         e.changedTouches[0].clientY);
+    const colorPosition = 100 * computeWeightOfNearestPointOnLine(position, lineStart, lineEnd);
     layerObject.gradient.updateColorPosition(colorPosition, colorId);
     layerObject.update();
     updatePreviewWindow();
