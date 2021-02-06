@@ -43,7 +43,7 @@ main {
 
 svg {
     width: 100%;
-    height: auto;
+    height: 100%;
 }
 
 svg line {
@@ -78,6 +78,7 @@ svg circle {
     width: 10em;
     height: 5em;
     opacity: 0.2;
+    border: none;
     border-radius: 15px;
     outline: none;
     background-color: var(--panel-background);

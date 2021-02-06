@@ -1,17 +1,35 @@
 
-const COLORBAR_LENGTH = 400;
-const COLORBAR_WIDTH = 14;
-const COLORBAR_EXTENSION = 70;
-const COLORBAR_RADIUS = 20;
+
+let COLORBAR_LENGTH;
+let COLORBAR_WIDTH;
+let COLORBAR_RADIUS;
 const COLORBAR_FILL = "#222222"
-const COLORBAR_CIRCLE_STROKE = 3;
+let COLORBAR_CIRCLE_STROKE;
 const COLORBAR_INITIAL_DIRECTION = 45;
-const COLORBAR_PADDING = 2;
+let COLORBAR_PADDING;
 const DEFAULT_COLORS = [{position: 0, color: "#ff95f3"}, {position: 100, color: "#008080"}];
 const DEFAULT_NEW_COLOR = "#FFFFFF";
 const MAX_RANDOM_COLORS = 10;
 const BACKGROUND_COLOR = "#FFFFFF";
 const BASELINE_BODY_GRADIENT = "linear-gradient(0deg, #000000aa 0%, #000000aa 100%)";
+
+function setSVGScale() {
+    let responsiveScale;
+    if (window.innerWidth < 600) {
+        responsiveScale = 4;
+        COLORBAR_LENGTH = 200;
+    } else {
+        responsiveScale = 1.5;
+        COLORBAR_LENGTH = 100;
+    }
+    COLORBAR_WIDTH = 2.8*responsiveScale;
+    COLORBAR_RADIUS = 4*responsiveScale;
+    COLORBAR_CIRCLE_STROKE = 0.6*responsiveScale;
+    COLORBAR_PADDING = 0.4*responsiveScale;
+}
+setSVGScale();
+
+window.addEventListener("resize", setSVGScale);
 
 const body = document.querySelector("body");
 const colorButton = document.querySelector("#color-button");
@@ -122,14 +140,14 @@ class Colorbar {
     }
 
     initialSVGSetup() {
-        this.lineStartX = previewWindow.offsetWidth / 2 -
-            COLORBAR_LENGTH / 2 * Math.cos(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
-        this.lineStartY = previewWindow.offsetHeight / 2 - 
-            COLORBAR_LENGTH / 2 * Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
-        this.lineEndX = previewWindow.offsetWidth / 2 +
-            COLORBAR_LENGTH / 2 * Math.cos(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
-        this.lineEndY = previewWindow.offsetHeight / 2 + 
-            COLORBAR_LENGTH / 2 * Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
+        this.lineStartX = - COLORBAR_LENGTH / 2 * 
+            Math.cos(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
+        this.lineStartY = - COLORBAR_LENGTH / 2 * 
+            Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
+        this.lineEndX = COLORBAR_LENGTH / 2 * 
+            Math.cos(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
+        this.lineEndY = COLORBAR_LENGTH / 2 * 
+            Math.sin(COLORBAR_INITIAL_DIRECTION * Math.PI / 180);
         this.setupSVGStructure();
         this.updateSVGPositions();
         this.addInitialListeners();
@@ -190,28 +208,6 @@ class Colorbar {
         elements.line = line;
         structureContainer.append(line);
 
-        // Extender which connects line to rotation button
-        /*const extender = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        this.setLineAttributes(extender, 1 / 3, "2, 2");
-        
-        extender.classList.add("svg-extender");
-        
-        elements.extender = extender;
-        structureContainer.append(extender);
-
-        // Button used for changing direction of gradient
-        const rotationButton = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        
-        rotationButton.setAttribute("r", COLORBAR_RADIUS);
-        rotationButton.setAttribute("stroke", COLORBAR_FILL);
-        rotationButton.setAttribute("stroke-width", COLORBAR_CIRCLE_STROKE);
-        rotationButton.setAttribute("fill", "transparent");
-        
-        rotationButton.setAttribute("layer-id", this.gradient.layerId);
-        elements.rotationButton = rotationButton;
-        rotationButton.classList.add("svg-rotation");
-        structureContainer.append(rotationButton);*/
-
         colorbarElement.append(structureContainer);
 
         // Contains the color circles
@@ -244,15 +240,7 @@ class Colorbar {
             lineEndY: this.lineEndY
         };
         const direction = this.direction;
-        p.extenderEndX = p.lineEndX + (COLORBAR_EXTENSION) *
-                            Math.cos(direction * Math.PI / 180);
-        p.extenderEndY = p.lineEndY + (COLORBAR_EXTENSION) * 
-                            Math.sin(direction * Math.PI / 180);
-        p.rotationX = p.extenderEndX + (COLORBAR_RADIUS + COLORBAR_PADDING) *
-                            Math.cos(direction * Math.PI / 180);
-        p.rotationY = p.extenderEndY + (COLORBAR_RADIUS + COLORBAR_PADDING) * 
-                            Math.sin(direction * Math.PI / 180);
-                            
+
         const colors = this.gradient.colors;
         p.colors = {};
         for (const colorId in colors) {
@@ -286,14 +274,6 @@ class Colorbar {
         this.svgElements.line.setAttribute("x2", p.lineEndX);
         this.svgElements.line.setAttribute("y2", p.lineEndY);
 
-        /*this.svgElements.extender.setAttribute("x1", p.lineEndX);
-        this.svgElements.extender.setAttribute("y1", p.lineEndY);
-        this.svgElements.extender.setAttribute("x2", p.extenderEndX);
-        this.svgElements.extender.setAttribute("y2", p.extenderEndY);
-
-        this.svgElements.rotationButton.setAttribute("cx", p.rotationX);
-        this.svgElements.rotationButton.setAttribute("cy", p.rotationY);*/
-        
         const colors = this.gradient.colors;
         for (const colorId in colors) {
             this.svgElements.colors[colorId].setAttribute("cx", p.colors[colorId].x);
@@ -570,10 +550,12 @@ function handleHideColorbar() {
     }
 }
 
-function getPreviewWindowPosition(e) {
+function getRelativePosition(e) {
     const boundRect = previewWindow.getBoundingClientRect();
-    return({x: e.clientX - boundRect.x,
-            y: e.clientY - boundRect.y})
+    console.log(e);
+    //console.log(e.clientX - boundRect.width / 2, e.clientY - boundRect.height / 2);
+    return({x: 100*(e.clientX - boundRect.x - boundRect.width / 2)/(boundRect.width / 2),
+            y: 100*(e.clientY - boundRect.y - boundRect.height / 2)/(boundRect.width / 2)});
 }
 
 function handleStartColorMouseDown() {
@@ -590,7 +572,7 @@ function handleStartColorMouseDown() {
 }
 
 function handleStartColorMove(e, layerObject) {
-    const position = getPreviewWindowPosition(e);
+    const position = getRelativePosition(e);
     layerObject.gradient.colorbar.updateLineStart(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
@@ -611,7 +593,7 @@ function handleEndColorMouseDown() {
 }
 
 function handleEndColorMove(e, layerObject) {
-    const position = getPreviewWindowPosition(e);
+    const position = getRelativePosition(e);
     layerObject.gradient.colorbar.updateLineEnd(position.x, position.y);
     layerObject.gradient.colorbar.updateSVGPositions();
     layerObject.update();
@@ -622,7 +604,7 @@ function handleColorbarClick(e) {
     const layerObject = layerObjects[this.getAttribute("layer-id")];
     const lineStart = {x: this.getAttribute("x1"), y: this.getAttribute("y1")};
     const lineEnd = {x: this.getAttribute("x2"), y: this.getAttribute("y2")};
-    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const clickPosition = getRelativePosition(e);
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.addColor(DEFAULT_NEW_COLOR, colorPosition);
     updatePreviewWindow();
@@ -644,7 +626,7 @@ function handleColorMouseDown() {
 }
 
 function handleColorMove(e, lineStart, lineEnd, colorId, layerObject) {
-    const clickPosition = {x: e.offsetX, y: e.offsetY};
+    const clickPosition = getRelativePosition(e);
     const colorPosition = 100 * computeWeightOfNearestPointOnLine(clickPosition, lineStart, lineEnd);
     layerObject.gradient.updateColorPosition(colorPosition, colorId);
     layerObject.update();
