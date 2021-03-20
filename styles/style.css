@@ -545,9 +545,11 @@ svg circle {
 
     main {
         flex: 1;
-        margin: 3em;
+        margin: auto;
         height: auto;
+        max-height: 80vh;
         box-sizing: content-box;
+        justify-content: center;
     }
 
     #preview-window {
@@ -598,6 +600,8 @@ svg circle {
         width: 100%;
         background-color: var(--panel-accent);
         padding: 1em;
+        position: absolute;
+        bottom: 0;
     }
 
     footer * {

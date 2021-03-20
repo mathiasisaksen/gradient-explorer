@@ -245,7 +245,6 @@ class Colorbar {
             lineEndX: this.lineEndX,
             lineEndY: this.lineEndY
         };
-        const direction = this.direction;
 
         const colors = this.gradient.colors;
         p.colors = {};
@@ -562,11 +561,18 @@ function handleHideColorbar() {
     }
 }
 
-function getRelativePosition(x, y) {
-    const boundRect = previewWindow.getBoundingClientRect();
-    return({x: 100*(x - boundRect.x - boundRect.width / 2)/(boundRect.width / 2),
-            y: 100*(y - boundRect.y - boundRect.height / 2)/(boundRect.width / 2)});
+function createSVGPositionComputer(rootSVGElement) {
+    const point = rootSVGElement.createSVGPoint();
+    function computeSVGPosition(clientX, clientY) {
+        point.x = clientX;
+        point.y = clientY;
+        return(point.matrixTransform(rootSVGElement.getScreenCTM().inverse()));
+    }
+    return(computeSVGPosition);
 }
+
+const getRelativePosition = createSVGPositionComputer(colorbarContainer);
+
 
 function handleStartColorMouseDown() {
     handleColorClick.call(this);
